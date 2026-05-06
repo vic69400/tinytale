@@ -486,15 +486,60 @@
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
   <a href="index.html" class="nav-logo">
-    <img src="logo.png" height="56" alt="TinyTale">
+    <img src="logo.png" height="44" alt="TinyTale">
     <span>Tiny<span class="vt">Tale</span></span>
   </a>
   <ul class="nav-links">
     <li><a href="index.html#how">Comment ça marche</a></li>
-    <li><a href="index.html#why">Pourquoi nous</a></li>
     <li><a href="index.html#pricing">Tarifs</a></li>
+    <li><a href="demo.html">Voir un exemple</a></li>
     <li><a href="create.html" class="nav-cta">Créer</a></li>
   </ul>
+  <!-- ✅ FIX CORRECTION 1 — Auth zone navbar create.html -->
+  <div id="nav-auth-zone" style="display:flex; gap:10px; align-items:center;">
+    <div id="nav-logged-out-create">
+      <button onclick="window.location.href='auth.html'"
+        style="background:transparent; border:1px solid rgba(255,255,255,0.3);
+               color:white; padding:8px 16px; border-radius:50px;
+               font-family:'Nunito',sans-serif; font-size:14px;
+               font-weight:600; cursor:pointer;">
+        Se connecter
+      </button>
+    </div>
+    <div id="nav-logged-in-create" style="display:none; gap:10px; align-items:center; position:relative;">
+      <a href="library.html"
+        style="color:rgba(255,255,255,0.8); text-decoration:none;
+               font-size:14px; font-weight:600; font-family:'Nunito',sans-serif;">
+        📚 Ma bibliothèque
+      </a>
+      <div id="nav-avatar-create"
+        onclick="document.getElementById('nav-menu-create').style.display = document.getElementById('nav-menu-create').style.display==='block'?'none':'block'"
+        style="width:36px; height:36px; border-radius:50%; background:#6C63FF;
+               color:white; display:flex; align-items:center; justify-content:center;
+               font-weight:700; font-size:14px; cursor:pointer; overflow:hidden;">
+        ?
+      </div>
+      <div id="nav-menu-create"
+        style="display:none; position:absolute; top:44px; right:0;
+               background:#1A1A2E; border:1px solid rgba(255,255,255,0.1);
+               border-radius:12px; padding:8px; min-width:160px;
+               box-shadow:0 8px 32px rgba(0,0,0,0.3); z-index:999;">
+        <a href="library.html"
+          style="display:block; color:white; text-decoration:none;
+                 padding:10px 16px; border-radius:8px; font-size:14px;
+                 font-family:'Nunito',sans-serif;">
+          📖 Ma bibliothèque
+        </a>
+        <button onclick="signOutCreate()"
+          style="display:block; width:100%; text-align:left; color:white;
+                 background:transparent; border:none; padding:10px 16px;
+                 border-radius:8px; font-size:14px; cursor:pointer;
+                 font-family:'Nunito',sans-serif;">
+          🚪 Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
   <button id="burger" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -1366,6 +1411,40 @@ async function genererHistoire() {
   const app  = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(app);
   const db   = firebase.firestore(app);
+
+  // ✅ FIX CORRECTION 1 — Auth state navbar create.html
+  auth.onAuthStateChanged(user => {
+    const out = document.getElementById('nav-logged-out-create');
+    const inn = document.getElementById('nav-logged-in-create');
+    if (!out || !inn) return;
+    if (user) {
+      out.style.display = 'none';
+      inn.style.display = 'flex';
+      const av = document.getElementById('nav-avatar-create');
+      if (av) {
+        if (user.photoURL) {
+          av.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" alt="">`;
+        } else {
+          av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+        }
+      }
+    } else {
+      out.style.display = 'block';
+      inn.style.display = 'none';
+    }
+  });
+
+  window.signOutCreate = async function() {
+    try { await auth.signOut(); window.location.href = 'index.html'; }
+    catch(e) { console.warn(e); }
+  };
+
+  // close menu on outside click
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('nav-menu-create');
+    const av   = document.getElementById('nav-avatar-create');
+    if (menu && av && !av.contains(e.target)) menu.style.display = 'none';
+  });
 
   window.saveHistoireToFirestore = async function(data) {
     const user = auth.currentUser;

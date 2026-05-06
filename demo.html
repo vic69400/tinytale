@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Démo histoire – TinyTale</title>
   <script src="config.js"></script>
+  <!-- ✅ FIX CORRECTION 2 — Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -479,15 +482,33 @@
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
   <a href="index.html" class="nav-logo">
-    <img src="logo.png" height="56" alt="TinyTale">
+    <img src="logo.png" height="44" alt="TinyTale">
     <span>Tiny<span class="vt">Tale</span></span>
   </a>
   <ul class="nav-links">
-    <li><a href="index.html#how">Comment ça marche</a></li>
-    <li><a href="index.html#why">Pourquoi nous</a></li>
+    <li><a href="index.html">Accueil</a></li>
     <li><a href="index.html#pricing">Tarifs</a></li>
     <li><a href="create.html" class="nav-cta">Créer la mienne</a></li>
   </ul>
+  <!-- ✅ FIX CORRECTION 2 — Auth zone navbar demo.html -->
+  <div style="display:flex; gap:10px; align-items:center;">
+    <div id="nav-out-demo">
+      <button onclick="window.location.href='auth.html'"
+        style="background:transparent; border:1px solid rgba(255,255,255,0.3);
+               color:white; padding:8px 16px; border-radius:50px;
+               font-family:'Nunito',sans-serif; font-size:14px;
+               font-weight:600; cursor:pointer;">
+        Se connecter
+      </button>
+    </div>
+    <div id="nav-in-demo" style="display:none; align-items:center; gap:8px;">
+      <a href="library.html"
+        style="color:rgba(255,255,255,0.8); text-decoration:none;
+               font-size:14px; font-weight:600; font-family:'Nunito',sans-serif;">
+        📚 Ma bibliothèque
+      </a>
+    </div>
+  </div>
   <button id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
 </nav>
 <div id="mmenu">
@@ -918,6 +939,30 @@ const io=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
 },{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ✅ FIX CORRECTION 2 — Firebase auth state demo.html
+try {
+  const cfg = TINYTALE_CONFIG.FIREBASE;
+  const app = firebase.apps.length ? firebase.app()
+    : firebase.initializeApp({
+        apiKey: cfg.API_KEY, authDomain: cfg.AUTH_DOMAIN,
+        projectId: cfg.PROJECT_ID, storageBucket: cfg.STORAGE_BUCKET,
+        messagingSenderId: cfg.MESSAGING_SENDER_ID, appId: cfg.APP_ID
+      });
+  const authDemo = firebase.auth(app);
+  authDemo.onAuthStateChanged(user => {
+    const out = document.getElementById('nav-out-demo');
+    const inn = document.getElementById('nav-in-demo');
+    if (!out || !inn) return;
+    if (user) {
+      out.style.display = 'none';
+      inn.style.display = 'flex';
+    } else {
+      out.style.display = 'block';
+      inn.style.display = 'none';
+    }
+  });
+} catch(e) { console.warn('Firebase demo:', e); }
 </script>
 </body>
 </html>
