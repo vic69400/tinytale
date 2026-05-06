@@ -1383,12 +1383,16 @@ async function genererHistoire() {
   localStorage.setItem('tinytale_valeur', state.valeur);
   localStorage.setItem('tinytale_duree',  state.duree);
 
-  await saveHistoireToFirestore({ // ✅ FIX BUG 5
-    prenom: state.prenom,
-    theme:  state.theme,
-    age:    state.age,
-    valeur: state.valeur,
-    duree:  state.duree,
+  await saveHistoireToFirestore({ // ✅ AMÉLIORATION 1 — titre complet + champs Firestore structurés
+    titre:         `L'Aventure de ${state.prenom} — ${state.theme}`,
+    prenom_enfant: state.prenom,
+    theme:         state.theme,
+    age_enfant:    state.age,
+    valeur:        state.valeur,
+    duree:         state.duree,
+    texte:         '',
+    audio_url:     '',
+    images:        [],
   });
 
   await sleep(3200); // Simule le temps de génération API

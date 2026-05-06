@@ -894,6 +894,12 @@ if (auth) {
   auth.onAuthStateChanged(user => {
     if (!user) { window.location.href = 'auth.html'; return; }
     currentUser = user;
+    // ✅ AMÉLIORATION 8 — Toast de bienvenue une seule fois par session
+    if (!sessionStorage.getItem('welcomed')) {
+      sessionStorage.setItem('welcomed', '1');
+      const name = user.displayName ? user.displayName.split(' ')[0] : 'toi';
+      setTimeout(() => showToast('success', `✨ Bienvenue ${name} ! Ta magie t'attend.`), 800);
+    }
     loadUserData();
     loadHistoires(user.uid);
   });
@@ -924,17 +930,54 @@ const ILLUS_EMOJIS = {
   'super-heros':['🦸','💥','🛡️','⚡','🌟'],
 };
 
+/* ✅ AMÉLIORATION 6 — données démo réalistes matchant la structure Firestore */
 function demoData() {
   return [
-    { id:'1', prenom_enfant:'Lucas', theme:'espace', age_enfant:6, valeur:'courage',
-      duree:'4 min 32', titre:"L'aventure spatiale de Lucas",
-      date: new Date(Date.now()-86400000*2), progress:80, ecoutes:3 },
-    { id:'2', prenom_enfant:'Emma', theme:'foret', age_enfant:4, valeur:'amitié',
-      duree:'3 min 12', titre:"Emma et la forêt enchantée",
-      date: new Date(Date.now()-86400000*5), progress:40, ecoutes:1 },
-    { id:'3', prenom_enfant:'Noah', theme:'ocean', age_enfant:7, valeur:'curiosité',
-      duree:'5 min 08', titre:"Noah au fond des océans",
-      date: new Date(Date.now()-86400000*1), progress:0, ecoutes:0 },
+    {
+      id: 'demo-1',
+      titre: "L'Aventure de Lucas dans les Étoiles",
+      prenom_enfant: 'Lucas',
+      theme: 'espace',
+      age_enfant: 6,
+      valeur: 'Courage',
+      duree: '4 min 32',
+      date: new Date(Date.now() - 86400000 * 2),
+      progress: 80,
+      ecoutes: 3,
+      texte: '',
+      audio_url: '',
+      images: []
+    },
+    {
+      id: 'demo-2',
+      titre: "Emma et la Forêt Enchantée",
+      prenom_enfant: 'Emma',
+      theme: 'foret',
+      age_enfant: 4,
+      valeur: 'Amitié',
+      duree: '3 min 15',
+      date: new Date(Date.now() - 86400000 * 5),
+      progress: 40,
+      ecoutes: 1,
+      texte: '',
+      audio_url: '',
+      images: []
+    },
+    {
+      id: 'demo-3',
+      titre: "Noah au Fond des Océans",
+      prenom_enfant: 'Noah',
+      theme: 'ocean',
+      age_enfant: 7,
+      valeur: 'Curiosité',
+      duree: '5 min 08',
+      date: new Date(Date.now() - 86400000 * 1),
+      progress: 0,
+      ecoutes: 0,
+      texte: '',
+      audio_url: '',
+      images: []
+    }
   ];
 }
 
@@ -1180,7 +1223,7 @@ function renderCard(h) {
     <div class="card-footer">
       <span class="card-durée">${h.duree||''}</span>
       <div class="card-actions">
-        <button class="ic-btn" onclick="event.stopPropagation();openRead('${h.id}')" title="Écouter">
+        <button class="ic-btn" onclick="event.stopPropagation();ouvrirHistoire('${h.id}','${(h.prenom_enfant||'').replace(/'/g,"\\'")}','${(h.theme||'').replace(/'/g,"\\'")}','${h.age_enfant||''}','${(h.valeur||'').replace(/'/g,"\\'")}','${(h.duree||'').replace(/'/g,"\\'")}');" title="Écouter"> <!-- ✅ AMÉLIORATION 4 -->
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </button>
         <button class="ic-btn pdf-btn" onclick="event.stopPropagation();showToast('info','PDF en cours de génération…')" title="PDF">
@@ -1210,7 +1253,7 @@ function renderListRow(h) {
     <td>${h.duree||'—'}</td>
     <td>
       <div class="list-actions">
-        <button class="ic-btn" onclick="event.stopPropagation();openRead('${h.id}')" title="Écouter">▶</button>
+        <button class="ic-btn" onclick="event.stopPropagation();ouvrirHistoire('${h.id}','${(h.prenom_enfant||'').replace(/'/g,"\\'")}','${(h.theme||'').replace(/'/g,"\\'")}','${h.age_enfant||''}','${(h.valeur||'').replace(/'/g,"\\'")}','${(h.duree||'').replace(/'/g,"\\'")}');" title="Écouter">▶</button> <!-- ✅ AMÉLIORATION 4 -->
         <button class="ic-btn pdf-btn" onclick="event.stopPropagation();showToast('info','PDF en cours…')" title="PDF">📄</button>
         <button class="ic-btn del" onclick="event.stopPropagation();confirmDelete('histoire','${h.id}')" title="Supprimer">🗑️</button>
       </div>
@@ -1241,6 +1284,17 @@ function setView(v) {
    READING MODAL
 ═══════════════════════════════════════════════════ */
 let audioPlaying = false, audioCur = 0, audioDur = 272, audioTimer = null;
+
+/* ✅ AMÉLIORATION 4 — Ouvrir demo.html avec les données de l'histoire */
+function ouvrirHistoire(id, prenom, theme, age, valeur, duree) {
+  localStorage.setItem('tinytale_prenom',      prenom || 'Lucas');
+  localStorage.setItem('tinytale_theme',       theme  || 'Espace');
+  localStorage.setItem('tinytale_age',         age    || '6');
+  localStorage.setItem('tinytale_valeur',      valeur || 'Courage');
+  localStorage.setItem('tinytale_duree',       duree  || '4 min 32');
+  localStorage.setItem('tinytale_histoire_id', id);
+  window.location.href = 'demo.html';
+}
 
 function openRead(id) {
   const h = allHistoires.find(h => h.id === id);

@@ -1,6 +1,40 @@
 /**
- * TinyTale.org — Fichier de configuration central
+ * ╔══════════════════════════════════════════════════╗
+ * ║         TINYTALE — GUIDE D'ACTIVATION APIs       ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 1 — Firebase (Auth + Bibliothèque)         ║
+ * ║   → console.firebase.google.com                  ║
+ * ║   → Remplace la section FIREBASE ci-dessous      ║
+ * ║   → Déjà configuré ✅                            ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 2 — Claude API (Génération histoires)      ║
+ * ║   → console.anthropic.com → API Keys             ║
+ * ║   → Remplace ANTHROPIC.API_KEY                   ║
+ * ║   → Décommenter BLOC B dans create.html          ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 3 — ElevenLabs (Voix clonée)               ║
+ * ║   → elevenlabs.io → Profile → API Key            ║
+ * ║   → Remplace ELEVENLABS.API_KEY                  ║
+ * ║   → Décommenter BLOC C dans create.html          ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 4 — Leonardo AI (Illustrations)            ║
+ * ║   → app.leonardo.ai → API Access                 ║
+ * ║   → Remplace LEONARDO.API_KEY                    ║
+ * ║   → Décommenter BLOC D dans create.html          ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 5 — Stripe (Paiements)                     ║
+ * ║   → dashboard.stripe.com → API Keys              ║
+ * ║   → Remplace STRIPE.PUBLIC_KEY + PRICE_IDs       ║
+ * ║   → Décommenter BLOC A dans create.html          ║
+ * ║   → Mettre APP.MODE_TEST = false en production   ║
+ * ╠══════════════════════════════════════════════════╣
+ * ║ ÉTAPE 6 — EmailJS (Envoi emails)                 ║
+ * ║   → dashboard.emailjs.com                        ║
+ * ║   → Remplace EMAILJS.SERVICE_ID etc.             ║
+ * ║   → Décommenter BLOC E dans create.html          ║
+ * ╚══════════════════════════════════════════════════╝
  *
+ * TinyTale.org — Fichier de configuration central   // ✅ AMÉLIORATION 10
  * Remplissez vos clés API ici une seule fois.
  * Ne commitez jamais ce fichier avec de vraies clés dans un dépôt public.
  */

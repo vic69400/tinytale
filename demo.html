@@ -535,7 +535,7 @@
 
     <p class="hero-sub" style="margin-top:18px">
       Créée avec la voix de <span>Papa</span> &nbsp;·&nbsp;
-      <span>4 min 32</span> &nbsp;·&nbsp;
+      <span id="duree-display">4 min 32</span> &nbsp;·&nbsp;
       Illustrée par IA
     </p>
   </div>
@@ -760,11 +760,12 @@
 </footer>
 
 <script>
-/* ─── PRENOM FROM localStorage ──────────────────────────── */
+/* ─── DONNÉES PERSONNALISÉES FROM localStorage ───────────── */ // ✅ AMÉLIORATION 3
 const prenom = localStorage.getItem('tinytale_prenom') || 'Lucas';
 const theme  = localStorage.getItem('tinytale_theme')  || 'Espace';
 const age    = localStorage.getItem('tinytale_age')    || '6';
 const valeur = localStorage.getItem('tinytale_valeur') || 'Courage';
+const duree  = localStorage.getItem('tinytale_duree')  || '4 min 32';
 
 /* Inject prenom everywhere */
 document.getElementById('hero-prenom').textContent   = prenom;
@@ -780,6 +781,9 @@ document.getElementById('badge-txt').textContent     = `${age} ANS · ${theme.to
 document.getElementById('hero-h1').innerHTML =
   `L'Aventure de <span class="prenom">${prenom}</span><br>dans les <span class="viol">Étoiles</span>`;
 document.title = `L'histoire de ${prenom} – TinyTale`;
+/* Durée personnalisée */
+const dureeEl = document.getElementById('duree-display');
+if (dureeEl) dureeEl.textContent = duree;
 
 /* ─── CURSOR ─────────────────────────────────────────────── */
 const cd = document.getElementById('cd');

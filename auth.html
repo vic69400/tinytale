@@ -654,13 +654,14 @@ async function createUserProfileIfNew(user, prenom = null) {
     const ref = db.collection('users').doc(user.uid);
     const doc = await ref.get();
     if (!doc.exists) {
-      await ref.set({
+      await ref.set({ // ✅ AMÉLIORATION 7 — profil Firestore complet
         uid:                user.uid,
         prenom:             prenom || user.displayName || 'Utilisateur',
         email:              user.email,
         photoURL:           user.photoURL || null,
         plan:               'gratuit',
         histoiresRestantes: 1,
+        histoiresTotal:     0,
         createdAt:          firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
