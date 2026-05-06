@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TinyTale – Histoires personnalisées, narrées et illustrées pour vos enfants. Créées par IA en 30 secondes.">
+  <title>TinyTale – Histoires magiques personnalisées pour enfants</title>
+  <script src="config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET & VARIABLES ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --v: #6C63FF;
+      --o: #FFD166;
+      --n: #1A1A2E;
+      --vl: rgba(108,99,255,.14);
+      --vm: rgba(108,99,255,.28);
+      --ol: rgba(255,209,102,.14);
+      --txt: #E8E8F0;
+      --muted: rgba(232,232,240,.58);
+      --card: rgba(255,255,255,.035);
+      --cborder: rgba(108,99,255,.2);
+      --r: 20px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--n);
+      color: var(--txt);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Baloo 2', cursive; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+
+    @media (hover: none) {
+      body { cursor: auto; }
+    }
+
+    /* ─── SCROLL PROGRESS ──────────────────────────────── */
+    #sp {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      z-index: 10001; pointer-events: none;
+    }
+
+    /* ─── CURSOR ───────────────────────────────────────── */
+    #cd, #cr {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; z-index: 10000;
+      transform: translate(-50%,-50%);
+    }
+    #cd {
+      width: 8px; height: 8px;
+      background: var(--v); z-index: 10001;
+      transition: background .2s, transform .15s;
+    }
+    #cr {
+      width: 40px; height: 40px;
+      border: 2px solid rgba(108,99,255,.55);
+      transition: width .3s, height .3s, border-color .3s;
+    }
+    body.cur-hover #cd { background: var(--o); transform: translate(-50%,-50%) scale(1.6); }
+    body.cur-hover #cr { width: 58px; height: 58px; border-color: rgba(255,209,102,.45); }
+
+    @media (hover: none) { #cd, #cr { display: none; } }
+
+    /* ─── LOADER ───────────────────────────────────────── */
+    #loader {
+      position: fixed; inset: 0; background: var(--n);
+      z-index: 9998; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 24px;
+      transition: opacity .6s, visibility .6s;
+    }
+    #loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .ld-logo {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800;
+    }
+    .ld-logo s { color: var(--v); font-style: normal; text-decoration: none; }
+
+    .ld-track {
+      width: 280px; height: 6px;
+      background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden;
+    }
+    .ld-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      border-radius: 99px;
+      animation: ldfill 1.4s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes ldfill { to { width: 100%; } }
+
+    .ld-txt { font-size: .82rem; color: var(--muted); letter-spacing: .1em; }
+
+    /* ─── NAVBAR ───────────────────────────────────────── */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: padding .4s, background .4s, backdrop-filter .4s, box-shadow .4s;
+    }
+    #nav.scrolled {
+      padding: 12px 48px;
+      background: rgba(26,26,46,.82);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--cborder);
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 800;
+    }
+    .nav-logo .v { color: var(--v); }
+
+    .nav-links { display: flex; align-items: center; gap: 30px; list-style: none; }
+    .nav-links a { font-weight: 600; font-size: .92rem; color: var(--muted); transition: color .2s; }
+    .nav-links a:hover { color: var(--txt); }
+
+    .nav-cta {
+      background: var(--v) !important; color: #fff !important;
+      padding: 9px 22px; border-radius: 50px;
+      transition: background .2s, transform .2s !important;
+    }
+    .nav-cta:hover { background: #5548e0 !important; transform: translateY(-2px); }
+
+    #burger {
+      display: none; flex-direction: column; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 8px;
+    }
+    #burger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--txt); border-radius: 2px; transition: all .3s;
+    }
+    #burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    #burger.open span:nth-child(2) { opacity: 0; }
+    #burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    #mmenu {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(26,26,46,.97); backdrop-filter: blur(20px);
+      flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+    }
+    #mmenu.open { display: flex; }
+    #mmenu a {
+      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 700;
+      color: var(--txt); transition: color .2s;
+    }
+    #mmenu a:hover { color: var(--v); }
+
+    /* ─── HERO ─────────────────────────────────────────── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center;
+      overflow: hidden; padding: 100px 48px 80px;
+    }
+    #hcanvas { position: absolute; inset: 0; z-index: 0; }
+
+    .hero-inner {
+      position: relative; z-index: 1;
+      max-width: 1280px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: center;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--ol); border: 1px solid rgba(255,209,102,.35);
+      color: var(--o); padding: 7px 18px; border-radius: 50px;
+      font-size: .82rem; font-weight: 700; margin-bottom: 22px;
+      letter-spacing: .05em;
+    }
+
+    #h1 {
+      font-size: clamp(2.4rem,4.8vw,3.8rem);
+      font-weight: 800; line-height: 1.15; margin-bottom: 20px;
+    }
+    .w {
+      display: inline-block; opacity: 0; transform: translateY(28px);
+      animation: wrev .5s ease forwards;
+    }
+    .w.v { color: var(--v); }
+    .w.o { color: var(--o); }
+    @keyframes wrev { to { opacity:1; transform:translateY(0); } }
+
+    .hero-sub {
+      font-size: 1.08rem; color: var(--muted); line-height: 1.75;
+      margin-bottom: 34px; max-width: 480px;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 52px; }
+
+    .btn-p {
+      position: relative; overflow: hidden;
+      background: var(--v); color: #fff;
+      padding: 15px 34px; border-radius: 50px;
+      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 700;
+      border: none; cursor: none;
+      box-shadow: 0 8px 30px rgba(108,99,255,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-p:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(108,99,255,.5); }
+
+    .btn-s {
+      position: relative; overflow: hidden;
+      background: transparent; color: var(--txt);
+      padding: 14px 34px; border-radius: 50px;
+      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 700;
+      border: 2px solid rgba(255,255,255,.18); cursor: none;
+      transition: border-color .2s, transform .2s;
+    }
+    .btn-s:hover { border-color: var(--v); transform: translateY(-3px); }
+
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,.28); transform: scale(0);
+      animation: rip .65s linear; pointer-events: none;
+    }
+    @keyframes rip { to { transform: scale(4); opacity: 0; } }
+
+    .hero-stats { display: flex; gap: 36px; }
+    .stat-n {
+      font-family: 'Baloo 2', cursive; font-size: 1.9rem; font-weight: 800;
+      color: var(--o); display: block;
+    }
+    .stat-l { font-size: .78rem; color: var(--muted); font-weight: 600; }
+
+    /* Phone mockup */
+    .hero-phone { display: flex; justify-content: center; align-items: center; }
+    .phone-wrap { animation: pfloat 4s ease-in-out infinite; }
+    @keyframes pfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+
+    .phone {
+      width: 240px; height: 490px;
+      background: linear-gradient(145deg,#252545,#1a1a2e);
+      border-radius: 42px;
+      border: 3px solid rgba(108,99,255,.38);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.04),
+        inset 0 0 32px rgba(108,99,255,.06);
+    }
+    .phone-notch {
+      width: 80px; height: 22px; background: #0e0e1d;
+      border-radius: 0 0 18px 18px; margin: 0 auto 14px;
+    }
+    .phone-scr { flex:1; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .phone-img {
+      width:100%; height:154px;
+      background: linear-gradient(135deg,rgba(108,99,255,.28),rgba(255,209,102,.22));
+      border-radius:16px; display:flex; align-items:center; justify-content:center;
+      font-size:3rem;
+    }
+    .phone-ttl { font-family:'Baloo 2',cursive; font-size:.82rem; font-weight:700; }
+    .phone-txt { font-size:.68rem; color:var(--muted); line-height:1.45; }
+    .phone-bar {
+      background:rgba(108,99,255,.15); border-radius:12px;
+      padding:9px 13px; display:flex; align-items:center; gap:9px;
+    }
+    .phone-play {
+      width:27px; height:27px; background:var(--v); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.65rem; flex-shrink:0;
+    }
+    .phone-ws { display:flex; gap:2px; align-items:center; flex:1; }
+    .pwb {
+      width:3px; background:var(--v); border-radius:2px;
+      animation:pwba .8s ease-in-out infinite alternate;
+    }
+    @keyframes pwba { from{height:3px} to{height:15px} }
+    .phone-glow {
+      position:absolute; width:180px; height:180px;
+      background:radial-gradient(circle,rgba(108,99,255,.28) 0%,transparent 70%);
+      top:-60px; left:-30px; border-radius:50%; pointer-events:none;
+    }
+
+    /* ─── SHARED SECTION ───────────────────────────────── */
+    section { padding: 96px 48px; }
+    .si { max-width: 1280px; margin: 0 auto; }
+
+    .stag {
+      display: inline-block;
+      background: var(--vl); color: var(--v);
+      border: 1px solid var(--vm); padding: 5px 16px;
+      border-radius: 50px; font-size: .78rem; font-weight: 700;
+      letter-spacing: .08em; margin-bottom: 14px; text-transform: uppercase;
+    }
+    .stitle { font-size: clamp(1.8rem,3.4vw,2.7rem); font-weight: 800; line-height: 1.2; margin-bottom: 14px; }
+    .ssub { font-size: 1.02rem; color: var(--muted); max-width: 540px; line-height: 1.72; margin-bottom: 56px; }
+
+    .reveal { opacity: 0; transform: translateY(38px); transition: opacity .7s, transform .7s; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ─── HOW IT WORKS ─────────────────────────────────── */
+    #how { background: rgba(255,255,255,.01); }
+
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 24px; position: relative;
+    }
+    .how-line {
+      position: absolute; top: 70px;
+      left: calc(33.33% + 32px); width: calc(33.33% - 64px);
+      height: 4px; z-index: 0; pointer-events: none;
+    }
+    .how-line2 {
+      position: absolute; top: 70px;
+      left: calc(66.66% + 32px); width: calc(33.33% - 64px);
+      height: 4px; z-index: 0; pointer-events: none;
+    }
+
+    .how-card {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: var(--r); padding: 38px 30px;
+      position: relative; overflow: hidden;
+      transform-style: preserve-3d; cursor: default;
+      transition: box-shadow .3s;
+    }
+    .how-card:hover { box-shadow: 0 20px 60px rgba(108,99,255,.22); }
+
+    .how-num {
+      position: absolute; top: -16px; right: 18px;
+      font-family: 'Baloo 2', cursive; font-size: 7.5rem; font-weight: 800;
+      color: rgba(108,99,255,.055); line-height: 1; pointer-events: none; user-select: none;
+    }
+    .how-ico {
+      width: 54px; height: 54px; background: var(--vl); border-radius: 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.55rem; margin-bottom: 18px;
+    }
+    .how-card h3 { font-size: 1.18rem; font-weight: 700; margin-bottom: 10px; }
+    .how-card p { font-size: .88rem; color: var(--muted); line-height: 1.7; }
+
+    /* ─── PREVIEW ───────────────────────────────────────── */
+    #preview { background: linear-gradient(180deg,transparent,rgba(108,99,255,.03),transparent); }
+
+    .pcard {
+      background: rgba(255,255,255,.03); border: 1px solid var(--cborder);
+      border-radius: 24px; padding: 46px; max-width: 820px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 30px;
+    }
+    .phead { display: flex; align-items: flex-start; gap: 22px; }
+    .pcover {
+      width: 78px; height: 78px; flex-shrink: 0;
+      background: linear-gradient(135deg,rgba(108,99,255,.3),rgba(255,209,102,.28));
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+    .pmeta h3 { font-size: 1.28rem; margin-bottom: 5px; }
+    .pmeta p { font-size: .83rem; color: var(--muted); }
+    .ptags { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; }
+    .ptag {
+      background: var(--vl); color: var(--v);
+      padding: 3px 11px; border-radius: 50px; font-size: .73rem; font-weight: 600;
+    }
+    .ptxt { font-size: .95rem; color: var(--muted); line-height: 1.88; font-style: italic; }
+    .ptxt strong { color: var(--o); font-style: normal; }
+
+    .aplayer {
+      background: rgba(108,99,255,.09); border: 1px solid rgba(108,99,255,.22);
+      border-radius: 16px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 18px;
+    }
+    .aplay-btn {
+      width: 48px; height: 48px; background: var(--v);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; cursor: none; border: none; flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(108,99,255,.4);
+      transition: transform .2s, background .2s;
+    }
+    .aplay-btn:hover { transform: scale(1.1); background: #5548e0; }
+    .aicon { font-size: 1.15rem; color: #fff; }
+    .awave { display: flex; gap: 2px; align-items: center; flex: 1; height: 40px; }
+    .wb {
+      flex: 1; background: var(--v); border-radius: 2px; opacity: .6;
+      animation: wpa 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes wpa { from{height:3px;opacity:.25} to{opacity:1} }
+    .atime { font-size: .83rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+    /* ─── WHY ───────────────────────────────────────────── */
+    #why { background: rgba(255,255,255,.01); }
+
+    .why-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; }
+
+    .wcard {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-top: 3px solid transparent; border-radius: var(--r);
+      padding: 34px 26px; transition: transform .3s, box-shadow .3s;
+    }
+    .wcard:nth-child(1) { border-top-color: var(--v); }
+    .wcard:nth-child(2) { border-top-color: var(--o); }
+    .wcard:nth-child(3) { border-top-color: #FF6B9D; }
+    .wcard:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+    .wico { font-size: 2.1rem; margin-bottom: 14px; display: block; }
+    .wcard h3 { font-size: 1.12rem; margin-bottom: 9px; }
+    .wcard p { font-size: .87rem; color: var(--muted); line-height: 1.7; }
+
+    /* ─── PRICING ───────────────────────────────────────── */
+    #pricing { position: relative; }
+
+    .price-banner {
+      background: linear-gradient(135deg,rgba(255,209,102,.09),rgba(108,99,255,.09));
+      border: 1px solid rgba(255,209,102,.28); border-radius: 14px;
+      padding: 15px 26px; text-align: center; margin-bottom: 38px;
+      font-weight: 700; font-size: .97rem;
+    }
+    .price-banner em { color: var(--o); font-style: normal; }
+
+    .ptoggle {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin-bottom: 46px;
+    }
+    .ptlabel { font-weight: 700; font-size: .93rem; color: var(--muted); transition: color .2s; }
+    .ptlabel.on { color: var(--txt); }
+
+    .tswitch {
+      position: relative; width: 56px; height: 28px;
+      background: var(--v); border-radius: 14px;
+      cursor: pointer; border: none;
+    }
+    .tknob {
+      position: absolute; top: 4px; left: 4px;
+      width: 20px; height: 20px; background: #fff;
+      border-radius: 50%; transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .tswitch.ann .tknob { transform: translateX(28px); }
+    .tbadge {
+      background: var(--ol); color: var(--o);
+      border: 1px solid rgba(255,209,102,.3);
+      padding: 3px 9px; border-radius: 50px; font-size: .72rem; font-weight: 700;
+    }
+
+    .pgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; align-items: start; }
+
+    .pcard {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: var(--r); padding: 34px 26px; position: relative;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .pcard.feat {
+      background: linear-gradient(145deg,rgba(108,99,255,.12),rgba(26,26,46,.85));
+      transform: scale(1.04);
+      animation: rborder 4s linear infinite;
+    }
+    @keyframes rborder {
+      0%   { box-shadow: 0 0 0 2px #6C63FF, 0 28px 80px rgba(108,99,255,.3); }
+      25%  { box-shadow: 0 0 0 2px #FF6B9D, 0 28px 80px rgba(255,107,157,.3); }
+      50%  { box-shadow: 0 0 0 2px #FFD166, 0 28px 80px rgba(255,209,102,.3); }
+      75%  { box-shadow: 0 0 0 2px #4ECDC4, 0 28px 80px rgba(78,205,196,.3); }
+      100% { box-shadow: 0 0 0 2px #6C63FF, 0 28px 80px rgba(108,99,255,.3); }
+    }
+
+    .pbadge {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(90deg,var(--v),#9b8fff); color: #fff;
+      padding: 4px 18px; border-radius: 50px; font-size: .72rem; font-weight: 700;
+      white-space: nowrap;
+    }
+    .pname { font-family:'Baloo 2',cursive; font-weight:700; font-size:1.05rem; color:var(--muted); margin-bottom:6px; }
+    .pprice { font-family:'Baloo 2',cursive; font-size:2.7rem; font-weight:800; margin-bottom:4px; }
+    .pprice sup { font-size:1.1rem; vertical-align:super; }
+    .pprice .per { font-size:.95rem; color:var(--muted); font-weight:400; }
+    .pdesc { font-size:.83rem; color:var(--muted); margin-bottom:22px; line-height:1.5; }
+    .pfeats { list-style:none; display:flex; flex-direction:column; gap:9px; margin-bottom:26px; }
+    .pfeats li { display:flex; align-items:center; gap:9px; font-size:.86rem; color:var(--muted); }
+    .pfeats li::before { content:"✓"; color:var(--v); font-weight:700; flex-shrink:0; }
+    .pfeats li.off { opacity:.38; text-decoration:line-through; }
+    .pfeats li.off::before { content:"✗"; color:#666; }
+
+    .pbtn {
+      width:100%; padding:13px; border-radius:50px;
+      font-family:'Baloo 2',cursive; font-size:.97rem; font-weight:700;
+      cursor:none; border:2px solid var(--v);
+      background:transparent; color:var(--v);
+      transition:all .2s; position:relative; overflow:hidden;
+    }
+    .pbtn:hover { background:var(--v); color:#fff; }
+    .pbtn.fb { background:var(--v); color:#fff; }
+    .pbtn.fb:hover { background:#5548e0; }
+
+    /* ─── TESTIMONIALS ─────────────────────────────────── */
+    #testimonials { background:rgba(255,255,255,.01); overflow:hidden; }
+
+    .tcar { position:relative; overflow:hidden; }
+    .ttrack { display:flex; transition:transform .6s cubic-bezier(.4,0,.2,1); }
+    .tslide { min-width:100%; padding:0 10%; }
+    .tinner {
+      background:rgba(255,255,255,.03); border:1px solid var(--cborder);
+      border-radius:24px; padding:46px; position:relative;
+    }
+    .tinner::before {
+      content:'"'; position:absolute; top:18px; left:38px;
+      font-family:'Baloo 2',cursive; font-size:5.5rem; color:var(--v);
+      opacity:.12; line-height:1;
+    }
+    .ttxt { font-size:1.08rem; line-height:1.82; color:var(--muted); margin-bottom:26px; position:relative; z-index:1; }
+    .tauthor { display:flex; align-items:center; gap:14px; }
+    .tavatar {
+      width:50px; height:50px; border-radius:50%;
+      background:linear-gradient(135deg,var(--v),var(--o));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.4rem; flex-shrink:0;
+    }
+    .tname { font-weight:700; font-size:.92rem; }
+    .trole { font-size:.78rem; color:var(--muted); }
+    .tstars { color:var(--o); font-size:.88rem; margin-top:2px; }
+
+    .tdots { display:flex; justify-content:center; gap:8px; margin-top:30px; }
+    .tdot {
+      width:8px; height:8px; border-radius:50%;
+      background:rgba(255,255,255,.2); cursor:pointer;
+      transition:all .3s; border:none;
+    }
+    .tdot.on { background:var(--v); width:24px; border-radius:4px; }
+
+    /* ─── CTA FINAL ─────────────────────────────────────── */
+    #ctaf {
+      background:linear-gradient(135deg,rgba(108,99,255,.18) 0%,rgba(26,26,46,.85) 55%,rgba(108,99,255,.1) 100%);
+      text-align:center; position:relative; overflow:hidden;
+    }
+    #ctaf::before {
+      content:''; position:absolute; top:-120px; left:50%; transform:translateX(-50%);
+      width:600px; height:600px;
+      background:radial-gradient(circle,rgba(108,99,255,.14) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .ctaf-in { position:relative; z-index:1; }
+    .ctaf-in h2 { font-size:clamp(2rem,4vw,3rem); margin-bottom:18px; }
+    .ctaf-in p { font-size:1.08rem; color:var(--muted); margin-bottom:38px; max-width:480px; margin-left:auto; margin-right:auto; }
+
+    .btn-gold {
+      position:relative; overflow:hidden;
+      display:inline-flex; align-items:center; gap:10px;
+      background:var(--o); color:var(--n);
+      padding:19px 54px; border-radius:50px;
+      font-family:'Baloo 2',cursive; font-size:1.18rem; font-weight:800;
+      border:none; cursor:none;
+      box-shadow:0 8px 40px rgba(255,209,102,.38);
+      transition:transform .2s, box-shadow .2s;
+    }
+    .btn-gold:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 16px 60px rgba(255,209,102,.5); }
+
+    /* ─── FOOTER ─────────────────────────────────────────── */
+    #foot { position:relative; background:rgba(0,0,0,.2); padding:80px 48px 40px; }
+    .fwave { position:absolute; top:-2px; left:0; right:0; line-height:0; }
+    .fwave svg { width:100%; display:block; }
+
+    .fi { max-width:1280px; margin:0 auto; }
+    .ftop { display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:56px; margin-bottom:56px; }
+
+    .fbrand .nav-logo { margin-bottom:14px; }
+    .fdesc { font-size:.86rem; color:var(--muted); line-height:1.72; margin-bottom:18px; max-width:270px; }
+    .fsocial { display:flex; gap:10px; }
+    .fsoc {
+      width:37px; height:37px; border-radius:10px;
+      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.95rem; transition:background .2s, border-color .2s;
+    }
+    .fsoc:hover { background:var(--vl); border-color:var(--v); }
+
+    .fcol h4 { font-size:.93rem; font-weight:700; margin-bottom:18px; }
+    .flinks { list-style:none; display:flex; flex-direction:column; gap:10px; }
+    .flinks a { font-size:.86rem; color:var(--muted); transition:color .2s; }
+    .flinks a:hover { color:var(--v); }
+
+    .fbot {
+      border-top:1px solid rgba(255,255,255,.06); padding-top:26px;
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:14px;
+    }
+    .fbot p { font-size:.8rem; color:var(--muted); }
+    .fbot em { color:var(--v); font-style:normal; }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width:1024px) {
+      section { padding:80px 32px; }
+      #nav, #nav.scrolled { padding-left:32px; padding-right:32px; }
+      .hero-inner { grid-template-columns:1fr; text-align:center; }
+      .hero-btns { justify-content:center; }
+      .hero-stats { justify-content:center; }
+      .hero-sub { margin-left:auto; margin-right:auto; }
+      .hero-phone { display:none; }
+      .hero-badge { margin-left:auto; margin-right:auto; }
+      .how-grid { grid-template-columns:1fr; }
+      .how-line, .how-line2 { display:none; }
+      .why-grid { grid-template-columns:1fr 1fr; }
+      .pgrid { grid-template-columns:1fr; }
+      .pcard.feat { transform:scale(1); }
+      .ftop { grid-template-columns:1fr 1fr; }
+      .nav-links { display:none; }
+      #burger { display:flex; }
+    }
+    @media (max-width:768px) {
+      section { padding:64px 24px; }
+      #nav, #nav.scrolled { padding-left:24px; padding-right:24px; }
+      .why-grid { grid-template-columns:1fr; }
+      .pcard { padding:28px 22px; }
+      .tslide { padding:0 4%; }
+      .tinner { padding:30px 22px; }
+      .ftop { grid-template-columns:1fr; gap:36px; }
+      .fbot { flex-direction:column; text-align:center; }
+      .pcard { padding:28px; }
+    }
+    @media (max-width:375px) {
+      section { padding:48px 18px; }
+      #h1 { font-size:2.1rem; }
+      .btn-p, .btn-s { padding:12px 22px; font-size:.92rem; }
+      .hero-stats { gap:20px; }
+      .stat-n { font-size:1.55rem; }
+    }
+    @media (min-width:1440px) {
+      section { padding:112px 64px; }
+      #nav, #nav.scrolled { padding-left:64px; padding-right:64px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- scroll progress -->
+<div id="sp"></div>
+
+<!-- cursor -->
+<div id="cd"></div>
+<div id="cr"></div>
+
+<!-- ══ 1. LOADER ══════════════════════════════════════════ -->
+<div id="loader">
+  <div class="ld-logo">
+    <img src="logo.png" height="40" alt="">
+    Tiny<s>Tale</s>
+  </div>
+  <div class="ld-track"><div class="ld-bar"></div></div>
+  <p class="ld-txt">Préparation des histoires magiques…</p>
+</div>
+
+<!-- ══ 3. NAVBAR ══════════════════════════════════════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <img src="logo.png" height="40" alt="TinyTale">
+    <span>Tiny<span class="v">Tale</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">Comment ça marche</a></li>
+    <li><a href="#why">Pourquoi nous</a></li>
+    <li><a href="#pricing">Tarifs</a></li>
+    <li><a href="#testimonials">Avis</a></li>
+    <li><a href="#ctaf" class="nav-cta">Commencer</a></li>
+  </ul>
+  <button id="burger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div id="mmenu">
+  <a href="#how" class="ml">Comment ça marche</a>
+  <a href="#why" class="ml">Pourquoi nous</a>
+  <a href="#pricing" class="ml">Tarifs</a>
+  <a href="#testimonials" class="ml">Avis</a>
+  <a href="#ctaf" class="ml" style="color:var(--v)">Commencer →</a>
+</div>
+
+<!-- ══ 4. HERO ════════════════════════════════════════════ -->
+<section id="hero">
+  <canvas id="hcanvas"></canvas>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">✨ 1ère histoire GRATUITE</div>
+      <h1 id="h1"></h1>
+      <p class="hero-sub">Créez en 30 secondes une histoire unique, narrée et illustrée, pour l'enfant de votre vie. Personnalisée à son prénom, son âge, ses rêves.</p>
+      <div class="hero-btns">
+        <button class="btn-p mag" id="cta1">✨ Créer une histoire</button>
+        <button class="btn-s">▶ Voir un exemple</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-n ctr" data-t="12000" data-s="+">0</span>
+          <span class="stat-l">Histoires créées</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-n ctr" data-t="4800" data-s="+">0</span>
+          <span class="stat-l">Familles heureuses</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-n ctr" data-t="98" data-s="%">0</span>
+          <span class="stat-l">% de satisfaction</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-phone">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-glow"></div>
+          <div class="phone-notch"></div>
+          <div class="phone-scr">
+            <div class="phone-img">🌙</div>
+            <p class="phone-ttl">La forêt enchantée de Léa</p>
+            <p class="phone-txt">Il était une fois une petite fille courageuse nommée Léa, qui découvrit un passage secret au fond du jardin…</p>
+            <div class="phone-bar">
+              <div class="phone-play">▶</div>
+              <div class="phone-ws" id="pws"></div>
+              <span style="font-size:.63rem;color:var(--muted)">2:34</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. COMMENT ÇA MARCHE ══════════════════════════════ -->
+<section id="how">
+  <div class="si">
+    <div class="reveal">
+      <span class="stag">Processus</span>
+      <h2 class="stitle">Une histoire en <span style="color:var(--v)">3 étapes</span></h2>
+      <p class="ssub">Simple, rapide et magique. Votre enfant sera le héros de son propre conte en moins d'une minute.</p>
+    </div>
+    <div class="how-grid">
+      <!-- SVG animated connectors -->
+      <svg class="how-line" viewBox="0 0 100 4" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#6C63FF" stop-opacity="0"/>
+            <stop offset="40%" stop-color="#6C63FF" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#6C63FF" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="2" x2="100" y2="2" stroke="url(#lg1)" stroke-width="1.5" stroke-dasharray="6 4">
+          <animate attributeName="stroke-dashoffset" from="0" to="-10" dur="0.7s" repeatCount="indefinite"/>
+        </line>
+      </svg>
+      <svg class="how-line2" viewBox="0 0 100 4" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.3"/>
+            <stop offset="60%" stop-color="#FFD166" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#FFD166" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="2" x2="100" y2="2" stroke="url(#lg2)" stroke-width="1.5" stroke-dasharray="6 4">
+          <animate attributeName="stroke-dashoffset" from="0" to="-10" dur="0.7s" repeatCount="indefinite"/>
+        </line>
+      </svg>
+
+      <div class="how-card reveal tilt">
+        <div class="how-num">01</div>
+        <div class="how-ico">✏️</div>
+        <h3>Personnalisez</h3>
+        <p>Entrez le prénom de l'enfant, son âge, et choisissez un thème parmi notre collection : dragons, fées, espace, dinosaures…</p>
+      </div>
+      <div class="how-card reveal tilt" style="transition-delay:.14s">
+        <div class="how-num">02</div>
+        <div class="how-ico">🤖</div>
+        <h3>L'IA crée la magie</h3>
+        <p>Notre IA génère un conte unique, une narration vocale douce et une illustration colorée rien que pour votre enfant.</p>
+      </div>
+      <div class="how-card reveal tilt" style="transition-delay:.28s">
+        <div class="how-num">03</div>
+        <div class="how-ico">🎧</div>
+        <h3>Profitez ensemble</h3>
+        <p>Écoutez, lisez ou imprimez l'histoire. Partagez ce moment précieux d'émerveillement en famille chaque soir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. APERÇU HISTOIRE ══════════════════════════════════ -->
+<section id="preview">
+  <div class="si">
+    <div class="reveal" style="text-align:center">
+      <span class="stag">Démonstration</span>
+      <h2 class="stitle">Voici ce que reçoit votre enfant</h2>
+      <p class="ssub" style="margin:0 auto 46px">Un vrai conte personnalisé, lu à voix haute avec une voix douce et naturelle.</p>
+    </div>
+    <div class="pcard reveal">
+      <div class="phead">
+        <div class="pcover">🌟</div>
+        <div class="pmeta">
+          <h3>La nuit des étoiles filantes de Théo</h3>
+          <p>Pour Théo, 5 ans · Thème : Espace &amp; Aventure</p>
+          <div class="ptags">
+            <span class="ptag">Espace</span>
+            <span class="ptag">Courage</span>
+            <span class="ptag">Amitié</span>
+          </div>
+        </div>
+      </div>
+      <p class="ptxt">
+        Il était une fois un petit garçon nommé <strong>Théo</strong> qui, chaque soir avant de dormir, regardait les étoiles depuis sa fenêtre en se demandant ce qu'il y avait au-delà des nuages. Une nuit, l'une d'elles se mit à clignoter différemment des autres… comme si elle l'appelait. <strong>Théo</strong> enfila sa combinaison spatiale imaginaire et, d'un seul bond, s'envola vers l'inconnu…
+      </p>
+      <div class="aplayer">
+        <button class="aplay-btn" id="abtn">
+          <span class="aicon" id="aico">▶</span>
+        </button>
+        <div class="awave" id="awv"></div>
+        <span class="atime">0:42 / 3:15</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7. POURQUOI TINYTALE ════════════════════════════════ -->
+<section id="why">
+  <div class="si">
+    <div class="reveal">
+      <span class="stag">Nos atouts</span>
+      <h2 class="stitle">Pourquoi les parents <span style="color:var(--o)">adorent</span> TinyTale</h2>
+      <p class="ssub">Plus qu'une histoire, c'est un rituel du soir que vos enfants réclameront chaque nuit.</p>
+    </div>
+    <div class="why-grid">
+      <div class="wcard reveal">
+        <span class="wico">🎨</span>
+        <h3>100% personnalisée</h3>
+        <p>Chaque histoire est unique, créée spécialement pour votre enfant avec son prénom, ses passions et son imagination. Jamais la même deux fois.</p>
+      </div>
+      <div class="wcard reveal" style="transition-delay:.14s">
+        <span class="wico">🎙️</span>
+        <h3>Narration vocale douce</h3>
+        <p>Une voix naturelle et chaleureuse raconte l'histoire de bout en bout. Parfait pour l'heure du coucher ou les enfants qui ne lisent pas encore.</p>
+      </div>
+      <div class="wcard reveal" style="transition-delay:.28s">
+        <span class="wico">🔒</span>
+        <h3>Sûr et bienveillant</h3>
+        <p>Tous nos contenus sont positifs, adaptés à l'âge, sans violence, avec des valeurs de partage, de courage et de respect.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 8. TARIFS ══════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="si">
+    <div class="reveal" style="text-align:center">
+      <span class="stag">Tarifs</span>
+      <h2 class="stitle">Commencez <span style="color:var(--v)">gratuitement</span></h2>
+      <p class="ssub" style="margin:0 auto 30px">Sans carte bancaire. Annulez quand vous voulez.</p>
+    </div>
+    <div class="price-banner reveal">
+      🎁 <em>1ère histoire offerte</em> pour chaque nouveau compte — sans engagement, sans carte bancaire.
+    </div>
+    <div class="ptoggle reveal">
+      <span class="ptlabel on" id="plm">Mensuel</span>
+      <button class="tswitch" id="pts" aria-label="Basculer mensuel/annuel">
+        <div class="tknob"></div>
+      </button>
+      <span class="ptlabel" id="pla">Annuel</span>
+      <span class="tbadge">–20%</span>
+    </div>
+    <div class="pgrid">
+      <div class="pcard reveal">
+        <p class="pname">Découverte</p>
+        <p class="pprice"><sup>€</sup>0</p>
+        <p class="pdesc">Pour essayer la magie TinyTale sans engagement.</p>
+        <ul class="pfeats">
+          <li>1 histoire offerte</li>
+          <li>Narration audio incluse</li>
+          <li>1 illustration</li>
+          <li class="off">Histoires illimitées</li>
+          <li class="off">Bibliothèque famille</li>
+          <li class="off">Mode hors-ligne</li>
+        </ul>
+        <button class="pbtn">Commencer gratuitement</button>
+      </div>
+      <div class="pcard feat reveal" style="transition-delay:.14s">
+        <div class="pbadge">⭐ Le plus populaire</div>
+        <p class="pname">Famille</p>
+        <p class="pprice" id="pf"><sup>€</sup>9<span class="per">,99 / mois</span></p>
+        <p class="pdesc">Le choix parfait pour les familles avec 1 à 3 enfants.</p>
+        <ul class="pfeats">
+          <li>Histoires illimitées</li>
+          <li>Narration audio incluse</li>
+          <li>3 illustrations / histoire</li>
+          <li>Bibliothèque famille (3 enfants)</li>
+          <li>Téléchargement PDF</li>
+          <li class="off">Mode hors-ligne</li>
+        </ul>
+        <button class="pbtn fb">Choisir Famille</button>
+      </div>
+      <div class="pcard reveal" style="transition-delay:.28s">
+        <p class="pname">Premium</p>
+        <p class="pprice" id="pp"><sup>€</sup>19<span class="per">,99 / mois</span></p>
+        <p class="pdesc">Pour les familles nombreuses et les créatifs exigeants.</p>
+        <ul class="pfeats">
+          <li>Histoires illimitées</li>
+          <li>Narration audio HD</li>
+          <li>5 illustrations / histoire</li>
+          <li>Enfants illimités</li>
+          <li>Téléchargement PDF + MP3</li>
+          <li>Mode hors-ligne</li>
+        </ul>
+        <button class="pbtn">Choisir Premium</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9. TÉMOIGNAGES ════════════════════════════════════ -->
+<section id="testimonials">
+  <div class="si">
+    <div class="reveal" style="text-align:center">
+      <span class="stag">Témoignages</span>
+      <h2 class="stitle">Ce que disent les <span style="color:var(--o)">parents</span></h2>
+      <p class="ssub" style="margin:0 auto 46px">Des milliers de familles font confiance à TinyTale chaque soir.</p>
+    </div>
+    <div class="tcar reveal">
+      <div class="ttrack" id="tt">
+        <div class="tslide">
+          <div class="tinner">
+            <p class="ttxt">"Ma fille Emma réclame son histoire TinyTale tous les soirs avant de dormir. Elle adore entendre son prénom dans le conte, ça la fait se sentir vraiment spéciale. La qualité de la narration est bluffante, on dirait une vraie conteuse professionnelle !"</p>
+            <div class="tauthor">
+              <div class="tavatar">👩</div>
+              <div>
+                <p class="tname">Sophie M.</p>
+                <p class="trole">Maman d'Emma, 4 ans · Paris</p>
+                <p class="tstars">★★★★★</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tslide">
+          <div class="tinner">
+            <p class="ttxt">"J'étais sceptique au début, mais mon fils de 6 ans m'a supplié de ne jamais arrêter l'abonnement. Chaque histoire est différente et il reconnaît ses personnages préférés dedans. Un vrai moment de connexion parent-enfant le soir."</p>
+            <div class="tauthor">
+              <div class="tavatar">👨</div>
+              <div>
+                <p class="tname">Thomas L.</p>
+                <p class="trole">Papa de Lucas, 6 ans · Lyon</p>
+                <p class="tstars">★★★★★</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tslide">
+          <div class="tinner">
+            <p class="ttxt">"Avec 3 enfants d'âges différents, TinyTale est une révolution. Chaque histoire est adaptée à chaque enfant, les illustrations sont magnifiques et le temps du soir est devenu un vrai rituel familial qu'on ne manquerait pour rien au monde."</p>
+            <div class="tauthor">
+              <div class="tavatar">👩</div>
+              <div>
+                <p class="tname">Marie-Claire D.</p>
+                <p class="trole">Maman de 3 enfants · Bordeaux</p>
+                <p class="tstars">★★★★★</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tdots">
+        <button class="tdot on" data-i="0"></button>
+        <button class="tdot" data-i="1"></button>
+        <button class="tdot" data-i="2"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 10. CTA FINAL ════════════════════════════════════ -->
+<section id="ctaf">
+  <div class="si">
+    <div class="ctaf-in reveal">
+      <span class="stag">Prêt ?</span>
+      <h2>Offrez la magie des mots<br>à votre enfant <span style="color:var(--o)">ce soir</span></h2>
+      <p>La première histoire est entièrement gratuite. Aucune carte bancaire requise.</p>
+      <button class="btn-gold mag">✨ Créer ma première histoire gratuite</button>
+      <p style="margin-top:14px;font-size:.8rem;color:var(--muted)">
+        Prêt en 30 secondes &nbsp;·&nbsp; Aucun compte requis &nbsp;·&nbsp; 100% sécurisé
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 11. FOOTER ════════════════════════════════════════ -->
+<footer id="foot">
+  <div class="fwave">
+    <svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0 72 L0 36 Q240 0 480 24 Q720 48 960 20 Q1200 0 1440 32 L1440 72 Z" fill="#1A1A2E"/>
+    </svg>
+  </div>
+  <div class="fi">
+    <div class="ftop">
+      <div class="fbrand">
+        <a href="#" class="nav-logo">
+          <img src="logo.png" height="36" alt="TinyTale">
+          <span>Tiny<span class="v">Tale</span></span>
+        </a>
+        <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans. La magie de la lecture au bout des doigts.</p>
+        <div class="fsocial">
+          <a href="#" class="fsoc" aria-label="Instagram">📷</a>
+          <a href="#" class="fsoc" aria-label="Facebook">📘</a>
+          <a href="#" class="fsoc" aria-label="TikTok">🎵</a>
+          <a href="#" class="fsoc" aria-label="YouTube">▶️</a>
+        </div>
+      </div>
+      <div class="fcol">
+        <h4>Produit</h4>
+        <ul class="flinks">
+          <li><a href="#how">Comment ça marche</a></li>
+          <li><a href="#pricing">Tarifs</a></li>
+          <li><a href="#why">Pourquoi TinyTale</a></li>
+          <li><a href="#testimonials">Avis parents</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+      <div class="fcol">
+        <h4>Légal &amp; Contact</h4>
+        <ul class="flinks">
+          <li><a href="#">Mentions légales</a></li>
+          <li><a href="#">Confidentialité</a></li>
+          <li><a href="#">CGU</a></li>
+          <li><a href="mailto:contact@tinytale.org">contact@tinytale.org</a></li>
+          <li><a href="#">FAQ</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="fbot">
+      <p>© 2025 <em>TinyTale</em>. Tous droits réservés. Fait avec ❤️ pour les familles.</p>
+      <p>Propulsé par <em>Claude</em> · <em>ElevenLabs</em> · <em>Leonardo AI</em></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ─── LOADER ─────────────────────────────────────────── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('gone');
+    buildH1();
+    runCounters();
+  }, 1650);
+});
+
+/* ─── CURSOR ─────────────────────────────────────────── */
+const cd = document.getElementById('cd');
+const cr = document.getElementById('cr');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cd.style.left = mx + 'px'; cd.style.top = my + 'px';
+});
+
+;(function lerpRing() {
+  rx += (mx - rx) * 0.11;
+  ry += (my - ry) * 0.11;
+  cr.style.left = rx + 'px'; cr.style.top = ry + 'px';
+  requestAnimationFrame(lerpRing);
+})();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('cur-hover'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('cur-hover'));
+});
+
+/* ─── SCROLL PROGRESS + NAV GLASSMORPHISM ─────────────── */
+const sp = document.getElementById('sp');
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  sp.style.width = pct + '%';
+  nav.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+
+/* ─── BURGER ─────────────────────────────────────────── */
+const burger = document.getElementById('burger');
+const mmenu  = document.getElementById('mmenu');
+burger.addEventListener('click', () => {
+  burger.classList.toggle('open');
+  mmenu.classList.toggle('open');
+});
+document.querySelectorAll('.ml').forEach(a => {
+  a.addEventListener('click', () => {
+    burger.classList.remove('open');
+    mmenu.classList.remove('open');
+  });
+});
+
+/* ─── HERO CANVAS: PARTICLES + SHOOTING STARS ────────── */
+const cvs = document.getElementById('hcanvas');
+const ctx = cvs.getContext('2d');
+
+function resize() { cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+const pts = Array.from({length: 150}, () => ({
+  x: Math.random() * 9999,
+  y: Math.random() * 9999,
+  r: Math.random() * 1.4 + 0.3,
+  a: Math.random(),
+  da: (Math.random() * 0.008 + 0.002) * (Math.random() > .5 ? 1 : -1),
+}));
+
+const ss = [];
+setInterval(() => {
+  ss.push({ x: Math.random() * cvs.width, y: Math.random() * cvs.height * .5,
+            len: 80 + Math.random() * 100, spd: 6 + Math.random() * 7,
+            a: 1, ang: Math.PI / 4 });
+}, 3200);
+
+function frame() {
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+  const bg = ctx.createLinearGradient(0, 0, 0, cvs.height);
+  bg.addColorStop(0, '#0c0c1e'); bg.addColorStop(1, '#1A1A2E');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+  // nebula glow
+  const gl = ctx.createRadialGradient(cvs.width*.7, cvs.height*.28, 0, cvs.width*.7, cvs.height*.28, 280);
+  gl.addColorStop(0, 'rgba(108,99,255,.09)'); gl.addColorStop(1, 'transparent');
+  ctx.fillStyle = gl; ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+  pts.forEach(p => {
+    p.a += p.da;
+    if (p.a > 1 || p.a < .05) p.da *= -1;
+    ctx.beginPath();
+    ctx.arc(p.x % cvs.width, p.y % cvs.height, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+    ctx.fill();
+  });
+
+  for (let i = ss.length - 1; i >= 0; i--) {
+    const s = ss[i];
+    const x2 = s.x - Math.cos(s.ang) * s.len;
+    const y2 = s.y - Math.sin(s.ang) * s.len;
+    const g = ctx.createLinearGradient(s.x, s.y, x2, y2);
+    g.addColorStop(0, `rgba(255,255,255,${s.a})`);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.stroke();
+    s.x += Math.cos(s.ang) * s.spd;
+    s.y += Math.sin(s.ang) * s.spd;
+    s.a -= .022;
+    if (s.a <= 0) ss.splice(i, 1);
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+
+/* ─── H1 WORD-BY-WORD REVEAL ─────────────────────────── */
+function buildH1() {
+  const words = [
+    {t:'Des',c:''},
+    {t:'histoires',c:'v'},
+    {t:'magiques',c:'o'},
+    {t:null,c:'br'},
+    {t:'créées',c:''},
+    {t:'rien',c:''},
+    {t:'que',c:''},
+    {t:'pour',c:''},
+    {t:'votre',c:''},
+    {t:'enfant',c:'v'},
+  ];
+  const h1 = document.getElementById('h1');
+  h1.innerHTML = '';
+  let delay = 0;
+  words.forEach(w => {
+    if (w.c === 'br') { h1.appendChild(document.createElement('br')); return; }
+    const s = document.createElement('span');
+    s.className = 'w' + (w.c ? ' ' + w.c : '');
+    s.textContent = w.t + ' ';
+    s.style.animationDelay = delay + 's';
+    h1.appendChild(s);
+    delay += 0.1;
+  });
+}
+
+/* ─── PHONE WAVE BARS ────────────────────────────────── */
+const pws = document.getElementById('pws');
+for (let i = 0; i < 18; i++) {
+  const b = document.createElement('div');
+  b.className = 'pwb';
+  b.style.animationDelay = (i * 0.055) + 's';
+  b.style.animationDuration = (.48 + Math.random() * .55) + 's';
+  pws.appendChild(b);
+}
+
+/* ─── AUDIO PLAYER ───────────────────────────────────── */
+const awv = document.getElementById('awv');
+for (let i = 0; i < 50; i++) {
+  const b = document.createElement('div');
+  b.className = 'wb';
+  b.style.height = (4 + Math.random() * 30) + 'px';
+  b.style.animationDelay = (i * 0.038) + 's';
+  b.style.animationDuration = (.75 + Math.random() * .85) + 's';
+  b.style.animationPlayState = 'paused';
+  awv.appendChild(b);
+}
+let playing = false;
+document.getElementById('abtn').addEventListener('click', () => {
+  playing = !playing;
+  document.getElementById('aico').textContent = playing ? '⏸' : '▶';
+  awv.querySelectorAll('.wb').forEach(b => {
+    b.style.animationPlayState = playing ? 'running' : 'paused';
+  });
+});
+
+/* ─── INTERSECTIONOBSERVER REVEAL ────────────────────── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ─── COUNTERS ───────────────────────────────────────── */
+function runCounters() {
+  document.querySelectorAll('.ctr').forEach(el => {
+    const target = +el.dataset.t;
+    const suf = el.dataset.s;
+    const dur = 2000, step = target / (dur / 16);
+    let cur = 0;
+    const t = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = Math.floor(cur).toLocaleString('fr-FR') + suf;
+      if (cur >= target) clearInterval(t);
+    }, 16);
+  });
+}
+
+/* ─── 3D TILT ────────────────────────────────────────── */
+document.querySelectorAll('.tilt').forEach(card => {
+  card.addEventListener('mouseenter', () => card.style.transition = 'box-shadow .3s');
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    card.style.transform = `perspective(800px) rotateY(${x*12}deg) rotateX(${-y*12}deg) translateZ(12px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform .55s ease, box-shadow .3s';
+    card.style.transform = '';
+  });
+});
+
+/* ─── RIPPLE ─────────────────────────────────────────── */
+document.querySelectorAll('.btn-p,.btn-s,.pbtn,.btn-gold').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const rip = document.createElement('span');
+    rip.className = 'ripple';
+    const rc = btn.getBoundingClientRect();
+    const sz = Math.max(rc.width, rc.height) * 2;
+    rip.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX-rc.left-sz/2}px;top:${e.clientY-rc.top-sz/2}px`;
+    btn.appendChild(rip);
+    rip.addEventListener('animationend', () => rip.remove());
+  });
+});
+
+/* ─── MAGNETIC BUTTONS ───────────────────────────────── */
+document.querySelectorAll('.mag').forEach(btn => {
+  btn.addEventListener('mouseenter', () => btn.style.transition = 'none');
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width/2) * .28;
+    const y = (e.clientY - r.top - r.height/2) * .28;
+    btn.style.transform = `translate(${x}px,${y}px)`;
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transition = 'transform .55s cubic-bezier(.4,0,.2,1)';
+    btn.style.transform = '';
+  });
+});
+
+/* ─── PRICING TOGGLE ─────────────────────────────────── */
+const pts2 = document.getElementById('pts');
+const plm  = document.getElementById('plm');
+const pla  = document.getElementById('pla');
+const pf   = document.getElementById('pf');
+const pp   = document.getElementById('pp');
+let ann = false;
+
+pts2.addEventListener('click', () => {
+  ann = !ann;
+  pts2.classList.toggle('ann', ann);
+  plm.classList.toggle('on', !ann);
+  pla.classList.toggle('on', ann);
+  pf.innerHTML = ann
+    ? '<sup>€</sup>7<span class="per">,99 / mois</span>'
+    : '<sup>€</sup>9<span class="per">,99 / mois</span>';
+  pp.innerHTML = ann
+    ? '<sup>€</sup>15<span class="per">,99 / mois</span>'
+    : '<sup>€</sup>19<span class="per">,99 / mois</span>';
+});
+
+/* ─── TESTIMONIALS CAROUSEL ──────────────────────────── */
+const tt   = document.getElementById('tt');
+const dots = document.querySelectorAll('.tdot');
+let cur = 0;
+const N = 3;
+
+function goTo(i) {
+  cur = ((i % N) + N) % N;
+  tt.style.transform = `translateX(-${cur * 100}%)`;
+  dots.forEach((d, j) => d.classList.toggle('on', j === cur));
+}
+
+dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.i)));
+
+let timer = setInterval(() => goTo(cur + 1), 4000);
+tt.addEventListener('mouseenter', () => clearInterval(timer));
+tt.addEventListener('mouseleave', () => { timer = setInterval(() => goTo(cur + 1), 4000); });
+
+let tx0 = 0;
+tt.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, { passive: true });
+tt.addEventListener('touchend', e => {
+  const dx = tx0 - e.changedTouches[0].clientX;
+  if (Math.abs(dx) > 48) goTo(cur + (dx > 0 ? 1 : -1));
+});
+</script>
+</body>
+</html>
