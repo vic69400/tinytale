@@ -6,6 +6,9 @@
   <meta name="description" content="TinyTale – Histoires personnalisées, narrées et illustrées pour vos enfants. Créées par IA en 30 secondes.">
   <title>TinyTale – Histoires magiques personnalisées pour enfants</title>
   <script src="config.js"></script>
+  <!-- ✅ FIX BUG 3 & 9 — Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -584,6 +587,42 @@
     .fbot p { font-size:.8rem; color:var(--muted); }
     .fbot em { color:var(--v); font-style:normal; }
 
+    /* ─── LOGO FIX ───────────────────────────────────────── */
+    img[src="logo.png"] { mix-blend-mode: screen; filter: brightness(1.1); } /* ✅ FIX BUG 4 */
+
+    /* ─── NAV AUTH ZONE ──────────────────────────────────── */
+    #nav-auth-zone { display:flex; align-items:center; gap:10px; } /* ✅ FIX BUG 3 */
+    .nav-login-btn {
+      background: var(--v); color: #fff; border: none; border-radius: 50px;
+      padding: 9px 22px; font-family: inherit; font-size: .88rem; font-weight: 700;
+      cursor: pointer; transition: background .2s, transform .2s;
+    }
+    .nav-login-btn:hover { background: #5548e0; transform: translateY(-2px); }
+    .nav-library-btn {
+      background: rgba(108,99,255,.15); color: var(--v); border: 1px solid rgba(108,99,255,.35);
+      border-radius: 50px; padding: 9px 22px; font-family: inherit; font-size: .88rem; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+    }
+    .nav-library-btn:hover { background: rgba(108,99,255,.25); }
+    .nav-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--v);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .88rem; cursor: pointer; position: relative;
+    }
+    .nav-user-menu {
+      position: absolute; top: calc(100% + 10px); right: 0;
+      background: #22223a; border: 1px solid var(--cborder); border-radius: 14px;
+      padding: 8px 0; min-width: 160px; box-shadow: 0 12px 40px rgba(0,0,0,.4);
+      display: none; flex-direction: column; z-index: 2000;
+    }
+    .nav-user-menu.open { display: flex; }
+    .nav-user-menu a, .nav-user-menu button {
+      padding: 10px 18px; color: var(--txt); font-size: .88rem; font-weight: 600;
+      text-align: left; background: none; border: none; cursor: pointer;
+      transition: background .15s; font-family: inherit;
+    }
+    .nav-user-menu a:hover, .nav-user-menu button:hover { background: rgba(255,255,255,.06); }
+
     /* ─── RESPONSIVE ─────────────────────────────────────── */
     @media (max-width:1024px) {
       section { padding:80px 32px; }
@@ -659,6 +698,22 @@
     <li><a href="#testimonials">Avis</a></li>
     <li><a href="#ctaf" class="nav-cta">Commencer</a></li>
   </ul>
+  <!-- ✅ FIX BUG 3 — auth zone -->
+  <div id="nav-auth-zone">
+    <div id="nav-logged-out">
+      <button class="nav-login-btn" onclick="window.location.href='auth.html'">Se connecter</button>
+    </div>
+    <div id="nav-logged-in" style="display:none; position:relative;">
+      <div class="nav-avatar" id="nav-avatar" onclick="toggleUserMenu()">
+        <span id="nav-avatar-letter">?</span>
+        <div class="nav-user-menu" id="nav-user-menu">
+          <a href="library.html">📚 Ma bibliothèque</a>
+          <a href="create.html">✨ Nouvelle histoire</a>
+          <button onclick="signOutUser()">🚪 Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <button id="burger" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -681,8 +736,8 @@
       <h1 id="h1"></h1>
       <p class="hero-sub">Créez en 30 secondes une histoire unique, narrée et illustrée, pour l'enfant de votre vie. Personnalisée à son prénom, son âge, ses rêves.</p>
       <div class="hero-btns">
-        <button class="btn-p mag" id="cta1">✨ Créer une histoire</button>
-        <button class="btn-s">▶ Voir un exemple</button>
+        <button class="btn-p mag" id="cta1" onclick="window.location.href='create.html'">✨ Créer une histoire</button> <!-- ✅ FIX BUG 1 -->
+        <button class="btn-s" onclick="window.location.href='demo.html'">▶ Voir un exemple</button> <!-- ✅ FIX BUG 1 -->
       </div>
       <div class="hero-stats">
         <div class="stat-item">
@@ -872,7 +927,7 @@
           <li class="off">Bibliothèque famille</li>
           <li class="off">Mode hors-ligne</li>
         </ul>
-        <button class="pbtn">Commencer gratuitement</button>
+        <button class="pbtn" onclick="window.location.href='create.html'">Commencer gratuitement</button> <!-- ✅ FIX BUG 2 -->
       </div>
       <div class="pcard feat reveal" style="transition-delay:.14s">
         <div class="pbadge">⭐ Le plus populaire</div>
@@ -887,7 +942,7 @@
           <li>Téléchargement PDF</li>
           <li class="off">Mode hors-ligne</li>
         </ul>
-        <button class="pbtn fb">Choisir Famille</button>
+        <button class="pbtn fb" onclick="window.location.href='auth.html'">Choisir Famille</button> <!-- ✅ FIX BUG 2 -->
       </div>
       <div class="pcard reveal" style="transition-delay:.28s">
         <p class="pname">Premium</p>
@@ -901,7 +956,7 @@
           <li>Téléchargement PDF + MP3</li>
           <li>Mode hors-ligne</li>
         </ul>
-        <button class="pbtn">Choisir Premium</button>
+        <button class="pbtn" onclick="window.location.href='auth.html'">Choisir Premium</button> <!-- ✅ FIX BUG 2 -->
       </div>
     </div>
   </div>
@@ -973,7 +1028,7 @@
       <span class="stag">Prêt ?</span>
       <h2>Offrez la magie des mots<br>à votre enfant <span style="color:var(--o)">ce soir</span></h2>
       <p>La première histoire est entièrement gratuite. Aucune carte bancaire requise.</p>
-      <button class="btn-gold mag">✨ Créer ma première histoire gratuite</button>
+      <button class="btn-gold mag" onclick="window.location.href='create.html'">✨ Créer ma première histoire gratuite</button> <!-- ✅ FIX BUG 2 -->
       <p style="margin-top:14px;font-size:.8rem;color:var(--muted)">
         Prêt en 30 secondes &nbsp;·&nbsp; Aucun compte requis &nbsp;·&nbsp; 100% sécurisé
       </p>
@@ -1316,6 +1371,48 @@ tt.addEventListener('touchend', e => {
   const dx = tx0 - e.changedTouches[0].clientX;
   if (Math.abs(dx) > 48) goTo(cur + (dx > 0 ? 1 : -1));
 });
+
+/* ─── FIREBASE AUTH STATE ─────────────────────────────── */ // ✅ FIX BUG 3 & 9
+(function() {
+  const cfg = TINYTALE_CONFIG.FIREBASE;
+  const firebaseConfig = {
+    apiKey:            cfg.API_KEY,
+    authDomain:        cfg.AUTH_DOMAIN,
+    projectId:         cfg.PROJECT_ID,
+    storageBucket:     cfg.STORAGE_BUCKET,
+    messagingSenderId: cfg.MESSAGING_SENDER_ID,
+    appId:             cfg.APP_ID,
+  };
+  const app  = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth(app);
+
+  auth.onAuthStateChanged(user => {
+    const out = document.getElementById('nav-logged-out');
+    const inn = document.getElementById('nav-logged-in');
+    if (user) {
+      out.style.display = 'none';
+      inn.style.display = 'flex';
+      const letter = (user.displayName || user.email || '?')[0].toUpperCase();
+      document.getElementById('nav-avatar-letter').textContent = letter;
+    } else {
+      out.style.display = 'flex';
+      inn.style.display = 'none';
+    }
+  });
+
+  window.toggleUserMenu = function() {
+    document.getElementById('nav-user-menu').classList.toggle('open');
+  };
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('nav-user-menu');
+    if (menu && !document.getElementById('nav-avatar').contains(e.target)) {
+      menu.classList.remove('open');
+    }
+  });
+  window.signOutUser = function() {
+    auth.signOut().then(() => { window.location.href = 'index.html'; });
+  };
+})();
 </script>
 </body>
 </html>

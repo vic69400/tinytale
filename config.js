@@ -16,7 +16,7 @@ const TINYTALE_CONFIG = {
 
     // Modèle recommandé pour la génération narrative
     // Liste complète : https://docs.anthropic.com/en/docs/about-claude/models
-    MODEL: "claude-opus-4-7",
+    MODEL: "claude-opus-4-5", // ✅ FIX BUG 8
 
     // Nombre maximum de tokens générés par histoire (2 000 ≈ ~1 500 mots)
     MAX_TOKENS: 2000,

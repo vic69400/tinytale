@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Créer une histoire – TinyTale</title>
   <script src="config.js"></script>
+  <!-- ✅ FIX BUG 5 & 9 — Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1334,11 +1338,53 @@ async function genererHistoire() {
   localStorage.setItem('tinytale_valeur', state.valeur);
   localStorage.setItem('tinytale_duree',  state.duree);
 
+  await saveHistoireToFirestore({ // ✅ FIX BUG 5
+    prenom: state.prenom,
+    theme:  state.theme,
+    age:    state.age,
+    valeur: state.valeur,
+    duree:  state.duree,
+  });
+
   await sleep(3200); // Simule le temps de génération API
 
   hideLoader();
   window.location.href = 'demo.html';
 }
+
+/* ─── FIREBASE INIT & SAVE ────────────────────────────── */ // ✅ FIX BUG 5 & 9
+(function() {
+  const cfg = TINYTALE_CONFIG.FIREBASE;
+  const firebaseConfig = {
+    apiKey:            cfg.API_KEY,
+    authDomain:        cfg.AUTH_DOMAIN,
+    projectId:         cfg.PROJECT_ID,
+    storageBucket:     cfg.STORAGE_BUCKET,
+    messagingSenderId: cfg.MESSAGING_SENDER_ID,
+    appId:             cfg.APP_ID,
+  };
+  const app  = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth(app);
+  const db   = firebase.firestore(app);
+
+  window.saveHistoireToFirestore = async function(data) {
+    const user = auth.currentUser;
+    if (!user) return; // utilisateur non connecté — on skip silencieusement
+    try {
+      await db.collection('users').doc(user.uid).collection('histoires').add({
+        ...data,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      // Décrémenter le compteur de crédits si la logique métier l'exige
+      await db.collection('users').doc(user.uid).set(
+        { histoiresRestantes: firebase.firestore.FieldValue.increment(-1) },
+        { merge: true }
+      );
+    } catch (e) {
+      console.warn('Firestore save skipped:', e.message);
+    }
+  };
+})();
 </script>
 </body>
 </html>
