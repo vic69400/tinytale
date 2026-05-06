@@ -1169,9 +1169,10 @@ function buildH1() {
     if (w.c === 'br') { h1.appendChild(document.createElement('br')); return; }
     const s = document.createElement('span');
     s.className = 'w' + (w.c ? ' ' + w.c : '');
-    s.textContent = w.t + ' ';
+    s.textContent = w.t;
     s.style.animationDelay = delay + 's';
     h1.appendChild(s);
+    h1.appendChild(document.createTextNode(' '));
     delay += 0.1;
   });
 }
