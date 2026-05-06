@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ma Bibliothèque — TinyTale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --v: #6C63FF;
+      --v2: #8B85FF;
+      --o: #FFD166;
+      --n: #1A1A2E;
+      --n2: #16213E;
+      --g: #F0F2FF;
+      --gs: #E8EAFF;
+      --txt: #2D2D4E;
+      --sub: #6B7280;
+      --card: #FFFFFF;
+      --border: #E5E7EB;
+      --success: #10B981;
+      --warn: #F59E0B;
+      --danger: #EF4444;
+      --r: 16px;
+      --sh: 0 4px 24px rgba(108,99,255,.12);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--g);
+      color: var(--txt);
+      min-height: 100vh;
+    }
+
+    /* ─── LOADING OVERLAY ─── */
+    #overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--n);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      transition: opacity .5s, visibility .5s;
+    }
+    #overlay.hidden { opacity: 0; visibility: hidden; }
+    .ov-logo { font-family: 'Baloo 2', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -1px; }
+    .ov-logo span { color: var(--o); }
+    .ov-dots { display: flex; gap: 10px; }
+    .ov-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--v); animation: bounce 1.2s infinite;
+    }
+    .ov-dot:nth-child(2) { animation-delay: .2s; background: var(--o); }
+    .ov-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(1); } 40% { transform: scale(1.5); } }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 36px; }
+    .nav-logo span {
+      font-family: 'Baloo 2', sans-serif; font-size: 1.3rem; font-weight: 800;
+      color: var(--n); letter-spacing: -0.5px;
+    }
+    .nav-logo span em { color: var(--v); font-style: normal; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-new {
+      background: var(--v); color: #fff;
+      border: none; border-radius: 50px; padding: 8px 20px;
+      font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .875rem;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-new:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.35); }
+
+    /* Avatar dropdown */
+    .avatar-wrap { position: relative; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--v), var(--o));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1rem;
+      color: #fff; cursor: pointer; border: 2px solid transparent;
+      transition: border-color .2s;
+      overflow: hidden;
+    }
+    .avatar:hover { border-color: var(--v); }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .dropdown {
+      position: absolute; top: calc(100% + 10px); right: 0;
+      background: #fff; border-radius: var(--r); padding: 8px 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,.14);
+      min-width: 200px; opacity: 0; visibility: hidden;
+      transform: translateY(-8px); transition: all .2s;
+    }
+    .avatar-wrap:hover .dropdown,
+    .avatar-wrap.open .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+    .dd-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .dd-name { font-weight: 700; font-size: .875rem; color: var(--txt); }
+    .dd-email { font-size: .75rem; color: var(--sub); margin-top: 2px; }
+    .dd-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; font-size: .875rem; font-weight: 600;
+      color: var(--txt); cursor: pointer; transition: background .15s;
+    }
+    .dd-item:hover { background: var(--gs); }
+    .dd-item.danger { color: var(--danger); }
+    .dd-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ─── MAIN CONTAINER ─── */
+    main { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(135deg, var(--n) 0%, #2D1B69 100%);
+      border-radius: 24px; padding: 40px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; margin-bottom: 32px; overflow: hidden; position: relative;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 80% 50%, rgba(108,99,255,.3) 0%, transparent 60%);
+    }
+    .hero-left { position: relative; z-index: 1; }
+    .greeting { font-size: .875rem; font-weight: 600; color: var(--o); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .hero h1 { font-family: 'Baloo 2', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 8px; }
+    .hero-sub { font-size: .9375rem; color: rgba(255,255,255,.7); }
+    .hero-right { position: relative; z-index: 1; display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+
+    /* Stats cards */
+    .stat-card {
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px; padding: 20px 24px; text-align: center;
+      min-width: 110px;
+    }
+    .stat-num {
+      font-family: 'Baloo 2', sans-serif; font-size: 2rem; font-weight: 800;
+      color: var(--o); line-height: 1;
+    }
+    .stat-label { font-size: .75rem; color: rgba(255,255,255,.7); font-weight: 600; margin-top: 4px; }
+
+    /* ─── TOOLBAR ─── */
+    .toolbar {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--sub); }
+    .search-input {
+      width: 100%; padding: 10px 16px 10px 44px;
+      border: 1.5px solid var(--border); border-radius: 50px;
+      font-family: 'Nunito', sans-serif; font-size: .9375rem;
+      background: #fff; color: var(--txt); outline: none;
+      transition: border-color .2s;
+    }
+    .search-input:focus { border-color: var(--v); }
+    .filter-select {
+      padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 50px;
+      font-family: 'Nunito', sans-serif; font-size: .875rem; font-weight: 600;
+      background: #fff; color: var(--txt); outline: none; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .filter-select:focus { border-color: var(--v); }
+    .view-toggle { display: flex; gap: 4px; background: var(--gs); border-radius: 50px; padding: 4px; }
+    .vbtn {
+      width: 36px; height: 36px; border-radius: 50px; border: none;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; cursor: pointer; transition: background .2s, color .2s;
+      color: var(--sub);
+    }
+    .vbtn.active { background: #fff; color: var(--v); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+    /* ─── STORY GRID ─── */
+    #stories-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    #stories-container.list-view { grid-template-columns: 1fr; }
+
+    /* ─── STORY CARD (grid) ─── */
+    .story-card {
+      background: var(--card); border-radius: var(--r);
+      box-shadow: var(--sh); overflow: hidden; cursor: pointer;
+      transition: transform .2s, box-shadow .2s; position: relative;
+    }
+    .story-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(108,99,255,.18); }
+    .card-cover {
+      height: 160px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 4rem;
+    }
+    .card-cover-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--n) 0%, #2D1B69 100%);
+    }
+    .card-cover-stars { position: absolute; inset: 0; }
+    .card-cover-emoji { position: relative; z-index: 1; filter: drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
+    .card-badge {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      font-size: .7rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 50px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    .badge-new { background: var(--v); color: #fff; }
+    .badge-progress { background: var(--warn); color: #fff; }
+    .badge-done { background: var(--success); color: #fff; }
+    .card-body { padding: 18px 20px 16px; }
+    .card-title { font-family: 'Baloo 2', sans-serif; font-size: 1rem; font-weight: 700; color: var(--txt); margin-bottom: 4px; }
+    .card-meta { font-size: .8125rem; color: var(--sub); margin-bottom: 12px; }
+    .card-progress { height: 6px; background: var(--gs); border-radius: 50px; overflow: hidden; margin-bottom: 8px; }
+    .card-progress-fill { height: 100%; background: linear-gradient(90deg, var(--v), var(--o)); border-radius: 50px; transition: width .5s; }
+    .card-progress-label { font-size: .75rem; color: var(--sub); font-weight: 600; }
+    .card-footer { padding: 12px 20px; border-top: 1px solid var(--gs); display: flex; align-items: center; justify-content: space-between; }
+    .card-age { font-size: .8125rem; font-weight: 700; color: var(--v); }
+    .card-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s; background: var(--gs); color: var(--sub);
+    }
+    .icon-btn:hover { background: var(--v); color: #fff; }
+    .icon-btn.del:hover { background: var(--danger); color: #fff; }
+
+    /* ─── LIST VIEW CARD ─── */
+    .story-card.list-card {
+      display: flex; align-items: center; gap: 20px;
+      padding: 16px 20px; border-radius: var(--r);
+    }
+    .list-card .card-cover { height: 64px; width: 64px; min-width: 64px; border-radius: 12px; font-size: 1.8rem; }
+    .list-card .card-body { flex: 1; padding: 0; }
+    .list-card .card-footer { border: none; padding: 0; }
+    .list-card .card-progress { margin-bottom: 4px; }
+
+    /* ─── SKELETON ─── */
+    .skeleton { background: linear-gradient(90deg, var(--gs) 25%, #e0e3ff 50%, var(--gs) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skel-card { background: #fff; border-radius: var(--r); overflow: hidden; box-shadow: var(--sh); }
+    .skel-cover { height: 160px; }
+    .skel-body { padding: 18px 20px; }
+    .skel-line { height: 14px; margin-bottom: 10px; }
+    .skel-line.short { width: 60%; }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      grid-column: 1 / -1; text-align: center; padding: 80px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .empty-icon { font-size: 4rem; }
+    .empty-title { font-family: 'Baloo 2', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--txt); }
+    .empty-sub { font-size: .9375rem; color: var(--sub); max-width: 360px; line-height: 1.6; }
+    .btn-empty {
+      background: var(--v); color: #fff; border: none; border-radius: 50px;
+      padding: 12px 28px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9375rem;
+      cursor: pointer; text-decoration: none; display: inline-block; margin-top: 8px;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-empty:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,.35); }
+
+    /* ─── MODALS ─── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(26,26,46,.7);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; visibility: hidden; transition: all .25s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: #fff; border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.2);
+      width: 100%; max-width: 800px; max-height: 90vh;
+      overflow-y: auto; transform: scale(.95) translateY(16px);
+      transition: transform .25s;
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 28px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .modal-title { font-family: 'Baloo 2', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--txt); }
+    .close-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: var(--gs); color: var(--sub); font-size: 1.25rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background .15s;
+    }
+    .close-btn:hover { background: var(--border); }
+
+    /* Reading modal */
+    .read-modal { max-width: 860px; }
+    .read-hero {
+      height: 200px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; font-size: 6rem;
+    }
+    .read-hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, var(--n) 0%, #2D1B69 100%); }
+    .read-hero canvas { position: absolute; inset: 0; }
+    .read-hero-emoji { position: relative; z-index: 1; filter: drop-shadow(0 8px 20px rgba(0,0,0,.4)); }
+    .read-body { padding: 28px; }
+
+    /* Audio player */
+    .audio-player {
+      background: linear-gradient(135deg, var(--n) 0%, #2D1B69 100%);
+      border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .audio-top { display: flex; align-items: center; gap: 16px; }
+    .audio-info { flex: 1; }
+    .audio-title { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: #fff; font-size: 1rem; }
+    .audio-artist { font-size: .8125rem; color: rgba(255,255,255,.6); }
+    .wave-bars { display: flex; align-items: center; gap: 3px; height: 32px; }
+    .wave-bar {
+      width: 3px; border-radius: 50px;
+      background: rgba(108,99,255,.5);
+      animation: none; transition: background .2s;
+    }
+    .wave-bar.playing { background: var(--v2); animation: wave 1s infinite; }
+    @keyframes wave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(var(--h)); } }
+    .audio-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .ctrl-btn {
+      background: none; border: none; cursor: pointer; color: rgba(255,255,255,.7);
+      font-size: 1.25rem; padding: 6px; transition: color .15s;
+    }
+    .ctrl-btn:hover { color: #fff; }
+    .ctrl-btn.play-btn {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--v); color: #fff; font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(108,99,255,.4);
+    }
+    .ctrl-btn.play-btn:hover { background: var(--v2); }
+    .progress-wrap { position: relative; height: 6px; background: rgba(255,255,255,.15); border-radius: 50px; cursor: pointer; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--v), var(--o)); border-radius: 50px; width: 0%; transition: width .3s linear; pointer-events: none; }
+    .progress-thumb { position: absolute; top: 50%; right: calc(100% - var(--p, 0%)); transform: translate(50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: var(--o); box-shadow: 0 2px 8px rgba(0,0,0,.3); pointer-events: none; transition: left .3s linear; }
+    .time-row { display: flex; justify-content: space-between; font-size: .75rem; color: rgba(255,255,255,.5); }
+
+    /* Story text */
+    .story-text { font-size: .9375rem; line-height: 1.85; color: var(--txt); }
+    .story-text p { margin-bottom: 16px; }
+    .story-text p:last-child { font-style: italic; color: var(--v); font-weight: 600; }
+
+    /* Illustrations */
+    .illus-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+    .illus-card {
+      border-radius: 12px; overflow: hidden; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; position: relative;
+    }
+    .illus-card:first-child { grid-column: span 2; }
+    .illus-bg { position: absolute; inset: 0; }
+    .illus-emoji { position: relative; z-index: 1; filter: drop-shadow(0 4px 16px rgba(0,0,0,.4)); }
+
+    /* Settings modal */
+    .settings-modal { max-width: 600px; }
+    .settings-tabs { display: flex; gap: 4px; padding: 16px 28px; border-bottom: 1px solid var(--border); }
+    .stab {
+      padding: 8px 16px; border-radius: 50px; border: none; font-family: 'Nunito', sans-serif;
+      font-weight: 700; font-size: .875rem; cursor: pointer; background: transparent; color: var(--sub); transition: background .15s, color .15s;
+    }
+    .stab.active { background: var(--v); color: #fff; }
+    .settings-panel { padding: 24px 28px; display: none; }
+    .settings-panel.active { display: block; }
+    .field-group { margin-bottom: 20px; }
+    .field-label { font-size: .8125rem; font-weight: 700; color: var(--sub); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
+    .field-input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: 'Nunito', sans-serif; font-size: .9375rem; color: var(--txt); outline: none; transition: border-color .2s;
+    }
+    .field-input:focus { border-color: var(--v); }
+    .plan-card {
+      border: 2px solid var(--border); border-radius: 12px; padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .plan-card.active-plan { border-color: var(--v); background: #F5F4FF; }
+    .plan-name { font-weight: 700; color: var(--txt); }
+    .plan-price { font-size: .875rem; color: var(--sub); }
+    .plan-badge { background: var(--v); color: #fff; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 50px; }
+    .danger-zone { border: 1.5px solid #FEE2E2; border-radius: 12px; padding: 20px; background: #FFF5F5; }
+    .danger-zone h3 { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--danger); margin-bottom: 8px; }
+    .danger-zone p { font-size: .875rem; color: #991B1B; margin-bottom: 16px; }
+    .btn-danger { background: var(--danger); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .btn-danger:hover { opacity: .85; }
+    .btn-save { background: var(--v); color: #fff; border: none; border-radius: 50px; padding: 10px 24px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .875rem; cursor: pointer; transition: transform .15s; }
+    .btn-save:hover { transform: translateY(-1px); }
+
+    /* Confirm modal */
+    .confirm-modal { max-width: 420px; text-align: center; padding: 40px 36px; }
+    .confirm-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .confirm-title { font-family: 'Baloo 2', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--txt); margin-bottom: 8px; }
+    .confirm-text { font-size: .9375rem; color: var(--sub); margin-bottom: 28px; line-height: 1.6; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+    .btn-cancel { background: var(--gs); color: var(--txt); border: none; border-radius: 50px; padding: 10px 24px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9375rem; cursor: pointer; }
+    .btn-confirm-del { background: var(--danger); color: #fff; border: none; border-radius: 50px; padding: 10px 24px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9375rem; cursor: pointer; }
+
+    /* ─── TOAST ─── */
+    #toasts { position: fixed; top: 80px; right: 24px; z-index: 9000; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      background: #fff; border-radius: 12px; padding: 14px 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.14); display: flex; align-items: center; gap: 12px;
+      min-width: 280px; transform: translateX(110%); transition: transform .3s;
+      border-left: 4px solid var(--v);
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    .toast-icon { font-size: 1.25rem; }
+    .toast-msg { flex: 1; font-size: .875rem; font-weight: 600; color: var(--txt); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      main { padding: 24px 16px 60px; }
+      .hero { flex-direction: column; padding: 28px 24px; }
+      .hero h1 { font-size: 1.5rem; }
+      .hero-right { justify-content: flex-start; }
+      .toolbar { flex-wrap: wrap; }
+      .search-wrap { min-width: 100%; }
+      .illus-grid { grid-template-columns: repeat(2, 1fr); }
+      .illus-card:first-child { grid-column: span 2; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="overlay">
+  <div class="ov-logo">Tiny<span>Tale</span></div>
+  <div class="ov-dots">
+    <div class="ov-dot"></div>
+    <div class="ov-dot"></div>
+    <div class="ov-dot"></div>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <rect width="36" height="36" rx="10" fill="#6C63FF"/>
+      <text x="18" y="26" text-anchor="middle" font-size="20" font-family="Baloo 2" fill="white">T</text>
+    </svg>
+    <span>Tiny<em>Tale</em></span>
+  </a>
+  <div class="nav-right">
+    <a href="create.html" class="btn-new">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nouvelle histoire
+    </a>
+    <div class="avatar-wrap" id="avatarWrap">
+      <div class="avatar" id="avatarBtn">
+        <span id="avatarInit">?</span>
+      </div>
+      <div class="dropdown" id="dropdown">
+        <div class="dd-header">
+          <div class="dd-name" id="ddName">Chargement…</div>
+          <div class="dd-email" id="ddEmail"></div>
+        </div>
+        <div class="dd-item" onclick="openSettings()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Paramètres
+        </div>
+        <div class="dd-sep"></div>
+        <div class="dd-item danger" onclick="signOutUser()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Se déconnecter
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero" id="heroSection">
+    <div class="hero-left">
+      <div class="greeting" id="greetingText">Bonjour ✨</div>
+      <h1 id="heroTitle">Ma bibliothèque</h1>
+      <p class="hero-sub" id="heroSub">Retrouvez toutes vos histoires personnalisées</p>
+    </div>
+    <div class="hero-right" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">Histoires</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statDone">0</div>
+        <div class="stat-label">Terminées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statMins">0</div>
+        <div class="stat-label">Minutes lues</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Rechercher une histoire…" oninput="filterHistoires()" />
+    </div>
+    <select class="filter-select" id="filterTheme" onchange="filterHistoires()">
+      <option value="">Tous les thèmes</option>
+      <option value="espace">🚀 Espace</option>
+      <option value="foret">🌲 Forêt</option>
+      <option value="ocean">🌊 Océan</option>
+      <option value="chateau">🏰 Château</option>
+      <option value="dinosaures">🦕 Dinosaures</option>
+      <option value="super-heros">🦸 Super-héros</option>
+    </select>
+    <select class="filter-select" id="filterStatus" onchange="filterHistoires()">
+      <option value="">Tous les statuts</option>
+      <option value="new">Nouvelles</option>
+      <option value="progress">En cours</option>
+      <option value="done">Terminées</option>
+    </select>
+    <div class="view-toggle">
+      <button class="vbtn active" id="btnGrid" onclick="setView('grid')" title="Grille">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </button>
+      <button class="vbtn" id="btnList" onclick="setView('list')" title="Liste">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stories container -->
+  <div id="stories-container"></div>
+</main>
+
+<!-- ─── READING MODAL ─── -->
+<div class="modal-overlay" id="readOverlay" onclick="closeRead(event)">
+  <div class="modal read-modal" id="readModal">
+    <div class="modal-header">
+      <span class="modal-title" id="readTitle">Histoire</span>
+      <button class="close-btn" onclick="closeReadModal()">✕</button>
+    </div>
+    <div class="read-hero" id="readHero">
+      <div class="read-hero-bg"></div>
+      <canvas id="readCanvas" width="860" height="200"></canvas>
+      <span class="read-hero-emoji" id="readEmoji">📖</span>
+    </div>
+    <div class="read-body">
+      <!-- Audio player -->
+      <div class="audio-player">
+        <div class="audio-top">
+          <div class="audio-info">
+            <div class="audio-title" id="audioTitle">Titre de l'histoire</div>
+            <div class="audio-artist">Narration TinyTale ✨</div>
+          </div>
+          <div class="wave-bars" id="waveBars"></div>
+        </div>
+        <div class="audio-controls">
+          <button class="ctrl-btn" onclick="seekRelative(-10)" title="-10s">⏮</button>
+          <button class="ctrl-btn play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+          <button class="ctrl-btn" onclick="seekRelative(10)" title="+10s">⏭</button>
+        </div>
+        <div>
+          <div class="progress-wrap" id="progressWrap" onclick="seekProgress(event)">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-thumb" id="progressThumb" style="--p:0%"></div>
+          </div>
+          <div class="time-row">
+            <span id="timeCur">0:00</span>
+            <span id="timeTot">3:24</span>
+          </div>
+        </div>
+      </div>
+      <!-- Text -->
+      <div class="story-text" id="storyText"></div>
+      <!-- Illustrations -->
+      <div class="illus-grid" id="illusGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SETTINGS MODAL ─── -->
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="modal settings-modal">
+    <div class="modal-header">
+      <span class="modal-title">Paramètres</span>
+      <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+    </div>
+    <div class="settings-tabs">
+      <button class="stab active" onclick="switchStab(this,'profil')">Profil</button>
+      <button class="stab" onclick="switchStab(this,'abonnement')">Abonnement</button>
+      <button class="stab" onclick="switchStab(this,'enfants')">Enfants</button>
+      <button class="stab" onclick="switchStab(this,'danger')">Compte</button>
+    </div>
+
+    <!-- Profil -->
+    <div class="settings-panel active" id="sprofil">
+      <div class="field-group">
+        <label class="field-label">Prénom</label>
+        <input type="text" class="field-input" id="setProfPrenom" placeholder="Votre prénom" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <input type="email" class="field-input" id="setProfEmail" placeholder="votre@email.com" disabled style="opacity:.6"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Photo de profil</label>
+        <input type="url" class="field-input" id="setProfPhoto" placeholder="URL de votre photo" />
+      </div>
+      <button class="btn-save" onclick="saveProfile()">Enregistrer</button>
+    </div>
+
+    <!-- Abonnement -->
+    <div class="settings-panel" id="sabonnement">
+      <div class="plan-card active-plan">
+        <div>
+          <div class="plan-name">Abonnement Famille</div>
+          <div class="plan-price">9,99 € / mois</div>
+        </div>
+        <span class="plan-badge">Actif</span>
+      </div>
+      <div class="plan-card">
+        <div>
+          <div class="plan-name">Abonnement Premium</div>
+          <div class="plan-price">19,99 € / mois</div>
+        </div>
+        <button class="btn-save" style="font-size:.8125rem;padding:8px 16px;">Upgrader</button>
+      </div>
+      <p style="font-size:.8125rem;color:var(--sub);margin-top:16px;">Gérer votre abonnement via le portail Stripe →</p>
+    </div>
+
+    <!-- Enfants -->
+    <div class="settings-panel" id="senfants">
+      <p style="font-size:.9375rem;color:var(--sub);margin-bottom:20px;">Profils enfants sauvegardés dans vos histoires :</p>
+      <div id="childrenList" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      <p style="font-size:.8125rem;color:var(--sub);margin-top:16px;">Les profils sont créés automatiquement lors de la génération d'une histoire.</p>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="settings-panel" id="sdanger">
+      <div class="danger-zone">
+        <h3>Zone de danger</h3>
+        <p>La suppression de votre compte est définitive. Toutes vos histoires et données seront effacées.</p>
+        <button class="btn-danger" onclick="confirmDeleteAccount()">Supprimer mon compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CONFIRM MODAL ─── -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="confirm-modal">
+      <div class="confirm-icon" id="confirmIcon">🗑️</div>
+      <div class="confirm-title" id="confirmTitle">Supprimer cette histoire ?</div>
+      <div class="confirm-text" id="confirmText">Cette action est irréversible.</div>
+      <div class="confirm-actions">
+        <button class="btn-cancel" onclick="closeConfirm()">Annuler</button>
+        <button class="btn-confirm-del" id="confirmActionBtn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<script>
+/* ────────────────────────────────────────────
+   FIREBASE INIT
+───────────────────────────────────────────── */
+let auth, db, currentUser = null;
+try {
+  const fbCfg = TINYTALE_CONFIG.FIREBASE;
+  const app = firebase.apps.length
+    ? firebase.app()
+    : firebase.initializeApp({
+        apiKey:            fbCfg.API_KEY,
+        authDomain:        fbCfg.AUTH_DOMAIN,
+        projectId:         fbCfg.PROJECT_ID,
+        storageBucket:     fbCfg.STORAGE_BUCKET,
+        messagingSenderId: fbCfg.MESSAGING_SENDER_ID,
+        appId:             fbCfg.APP_ID,
+      });
+  auth = firebase.auth();
+  db   = firebase.firestore();
+} catch(e) {
+  console.warn('Firebase non configuré :', e.message);
+}
+
+/* ────────────────────────────────────────────
+   AUTH GUARD
+───────────────────────────────────────────── */
+if (auth) {
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = 'auth.html';
+      return;
+    }
+    currentUser = user;
+    initApp();
+  });
+} else {
+  // Demo mode without Firebase
+  currentUser = { uid: 'demo', displayName: 'Démo', email: 'demo@tinytale.org', photoURL: null };
+  setTimeout(initApp, 500);
+}
+
+/* ────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────── */
+let allStories = [];
+let currentView = 'grid';
+let deleteTargetId = null;
+let audioTimer = null;
+let audioPlaying = false;
+let audioCurrent = 0;
+const audioDuration = 204; // 3:24
+
+const THEME_EMOJIS = {
+  espace: '🚀', foret: '🌲', ocean: '🌊',
+  chateau: '🏰', dinosaures: '🦕', 'super-heros': '🦸',
+};
+const THEME_GRADIENTS = {
+  espace:      ['#0F0C29','#302B63'],
+  foret:       ['#134E5E','#71B280'],
+  ocean:       ['#0575E6','#021B79'],
+  chateau:     ['#614385','#516395'],
+  dinosaures:  ['#355C7D','#6C5B7B'],
+  'super-heros':['#360033','#0B8793'],
+};
+const ILLUS_EMOJIS = {
+  espace: ['🚀','🌌','⭐','🪐','🌟'],
+  foret:  ['🌲','🦋','🍄','🦌','🌸'],
+  ocean:  ['🐬','🌊','🐙','🐠','🌺'],
+  chateau:['🏰','🐉','⚔️','👑','✨'],
+  dinosaures:['🦕','🌿','🥚','🌋','🦖'],
+  'super-heros':['🦸','💥','🛡️','⚡','🌟'],
+};
+
+function demoStories() {
+  return [
+    { id:'1', prenom:'Lucas', theme:'espace', age:6, valeur:'courage', date: new Date(Date.now()-86400000*2), progress:100, status:'done', duree:'moyen' },
+    { id:'2', prenom:'Emma', theme:'foret', age:4, valeur:'amitié', date: new Date(Date.now()-86400000*5), progress:45, status:'progress', duree:'court' },
+    { id:'3', prenom:'Noah', theme:'ocean', age:7, valeur:'curiosité', date: new Date(Date.now()-86400000*1), progress:0, status:'new', duree:'long' },
+  ];
+}
+
+/* ────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+async function initApp() {
+  setGreeting();
+  populateNavUser();
+  await loadHistoires();
+  hideOverlay();
+  animateStats();
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Bonjour ☀️' : h < 18 ? 'Bon après-midi 🌤️' : 'Bonsoir 🌙';
+  document.getElementById('greetingText').textContent = g;
+  const name = currentUser.displayName ? currentUser.displayName.split(' ')[0] : '';
+  document.getElementById('heroTitle').textContent = name ? `Bonjour, ${name} 👋` : 'Ma bibliothèque';
+}
+
+function populateNavUser() {
+  const initEl = document.getElementById('avatarInit');
+  const nameEl = document.getElementById('ddName');
+  const emailEl = document.getElementById('ddEmail');
+  const avatarEl = document.getElementById('avatarBtn');
+
+  const name = currentUser.displayName || currentUser.email || 'Utilisateur';
+  nameEl.textContent = name;
+  emailEl.textContent = currentUser.email || '';
+
+  if (currentUser.photoURL) {
+    avatarEl.innerHTML = `<img src="${currentUser.photoURL}" alt="avatar" />`;
+  } else {
+    initEl.textContent = name.charAt(0).toUpperCase();
+  }
+
+  // Settings pre-fill
+  document.getElementById('setProfPrenom').value = currentUser.displayName || '';
+  document.getElementById('setProfEmail').value = currentUser.email || '';
+  document.getElementById('setProfPhoto').value = currentUser.photoURL || '';
+}
+
+/* ────────────────────────────────────────────
+   FIRESTORE CRUD
+───────────────────────────────────────────── */
+async function loadHistoires() {
+  showSkeletons();
+  try {
+    if (db && currentUser.uid !== 'demo') {
+      const snap = await db.collection('users').doc(currentUser.uid).collection('histoires')
+        .orderBy('date', 'desc').get();
+      allStories = snap.docs.map(d => ({ id: d.id, ...d.data(), date: d.data().date?.toDate() || new Date() }));
+    } else {
+      await sleep(800);
+      allStories = demoStories();
+    }
+  } catch(e) {
+    console.warn('loadHistoires:', e.message);
+    allStories = demoStories();
+  }
+  updateStats();
+  renderStories(allStories);
+}
+
+async function deleteHistoire(id) {
+  try {
+    if (db && currentUser.uid !== 'demo') {
+      await db.collection('users').doc(currentUser.uid).collection('histoires').doc(id).delete();
+    }
+    allStories = allStories.filter(s => s.id !== id);
+    updateStats();
+    renderStories(filterActive());
+    toast('Histoire supprimée', 'success');
+  } catch(e) {
+    toast('Erreur lors de la suppression', 'error');
+  }
+}
+
+async function updateProgress(id, progress) {
+  const status = progress >= 100 ? 'done' : progress > 0 ? 'progress' : 'new';
+  try {
+    if (db && currentUser.uid !== 'demo') {
+      await db.collection('users').doc(currentUser.uid).collection('histoires').doc(id)
+        .update({ progress, status });
+    }
+    const s = allStories.find(s => s.id === id);
+    if (s) { s.progress = progress; s.status = status; }
+  } catch(e) { /* silent */ }
+}
+
+async function saveProfile() {
+  const prenom = document.getElementById('setProfPrenom').value.trim();
+  const photo  = document.getElementById('setProfPhoto').value.trim();
+  try {
+    if (auth && currentUser.updateProfile) {
+      await currentUser.updateProfile({ displayName: prenom, photoURL: photo || null });
+    }
+    if (db && currentUser.uid !== 'demo') {
+      await db.collection('users').doc(currentUser.uid).set({ displayName: prenom, photoURL: photo }, { merge: true });
+    }
+    populateNavUser();
+    toast('Profil mis à jour ✓', 'success');
+  } catch(e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+async function signOutUser() {
+  try {
+    if (auth) await auth.signOut();
+    window.location.href = 'auth.html';
+  } catch(e) {
+    toast('Erreur de déconnexion', 'error');
+  }
+}
+
+/* ────────────────────────────────────────────
+   RENDER
+───────────────────────────────────────────── */
+function showSkeletons() {
+  const c = document.getElementById('stories-container');
+  c.innerHTML = [1,2,3,4,5,6].map(() => `
+    <div class="skel-card">
+      <div class="skeleton skel-cover"></div>
+      <div class="skel-body">
+        <div class="skeleton skel-line" style="width:70%"></div>
+        <div class="skeleton skel-line short"></div>
+        <div class="skeleton skel-line" style="height:6px;width:100%"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderStories(stories) {
+  const c = document.getElementById('stories-container');
+  if (!stories.length) {
+    c.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">Aucune histoire trouvée</div>
+        <div class="empty-sub">Vous n'avez pas encore d'histoires correspondant à ces critères.</div>
+        <a href="create.html" class="btn-empty">✨ Créer une histoire</a>
+      </div>`;
+    return;
+  }
+  const isList = currentView === 'list';
+  c.innerHTML = stories.map(s => renderCard(s, isList)).join('');
+}
+
+function renderCard(s, isList) {
+  const emoji = THEME_EMOJIS[s.theme] || '📖';
+  const grad = THEME_GRADIENTS[s.theme] || ['#1A1A2E','#2D1B69'];
+  const badgeClass = s.status === 'done' ? 'badge-done' : s.status === 'progress' ? 'badge-progress' : 'badge-new';
+  const badgeLabel = s.status === 'done' ? 'Terminée' : s.status === 'progress' ? 'En cours' : 'Nouvelle';
+  const prog = s.progress || 0;
+  const dateStr = s.date ? new Date(s.date).toLocaleDateString('fr-FR', { day:'numeric', month:'long' }) : '';
+
+  const stars = Array.from({length:12}, (_,i) => {
+    const x = Math.random()*100, y = Math.random()*100, sz = Math.random()*2+1;
+    return `<circle cx="${x}%" cy="${y}%" r="${sz}" fill="rgba(255,255,255,${(Math.random()*.5+.3).toFixed(2)})"/>`;
+  }).join('');
+
+  if (isList) {
+    return `
+    <div class="story-card list-card" onclick="openRead('${s.id}')">
+      <div class="card-cover" style="background:linear-gradient(135deg,${grad[0]},${grad[1]})">
+        <span class="card-cover-emoji">${emoji}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">L'aventure de ${s.prenom}</div>
+        <div class="card-meta">${(s.theme||'').charAt(0).toUpperCase()+(s.theme||'').slice(1)} · ${s.age} ans · ${dateStr}</div>
+        <div class="card-progress"><div class="card-progress-fill" style="width:${prog}%"></div></div>
+        <div class="card-progress-label">${prog}% lu</div>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge ${badgeClass}">${badgeLabel}</span>
+        <div class="card-actions">
+          <button class="icon-btn del" onclick="event.stopPropagation();askDelete('${s.id}')" title="Supprimer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="story-card" onclick="openRead('${s.id}')">
+    <div class="card-cover" style="background:linear-gradient(135deg,${grad[0]},${grad[1]})">
+      <svg class="card-cover-stars" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%">${stars}</svg>
+      <span class="card-cover-emoji">${emoji}</span>
+      <span class="card-badge ${badgeClass}">${badgeLabel}</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">L'aventure de ${s.prenom}</div>
+      <div class="card-meta">${(s.theme||'').charAt(0).toUpperCase()+(s.theme||'').slice(1)} · ${s.age} ans · ${dateStr}</div>
+      <div class="card-progress"><div class="card-progress-fill" style="width:${prog}%"></div></div>
+      <div class="card-progress-label">${prog}% lu</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-age">${s.age} ans</span>
+      <div class="card-actions">
+        <button class="icon-btn" onclick="event.stopPropagation();openRead('${s.id}')" title="Lire">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="icon-btn del" onclick="event.stopPropagation();askDelete('${s.id}')" title="Supprimer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ────────────────────────────────────────────
+   FILTER & VIEW
+───────────────────────────────────────────── */
+function filterActive() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const th = document.getElementById('filterTheme').value;
+  const st = document.getElementById('filterStatus').value;
+  return allStories.filter(s => {
+    const matchQ = !q || s.prenom?.toLowerCase().includes(q) || s.theme?.toLowerCase().includes(q);
+    const matchTh = !th || s.theme === th;
+    const matchSt = !st || s.status === st;
+    return matchQ && matchTh && matchSt;
+  });
+}
+
+function filterHistoires() {
+  renderStories(filterActive());
+}
+
+function setView(v) {
+  currentView = v;
+  const c = document.getElementById('stories-container');
+  document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+  document.getElementById('btnList').classList.toggle('active', v === 'list');
+  c.classList.toggle('list-view', v === 'list');
+  renderStories(filterActive());
+}
+
+/* ────────────────────────────────────────────
+   STATS COUNTER
+───────────────────────────────────────────── */
+function updateStats() {
+  const total = allStories.length;
+  const done  = allStories.filter(s => s.status === 'done').length;
+  const mins  = allStories.reduce((acc, s) => acc + (s.progress || 0) / 100 * 5, 0) | 0;
+  document.getElementById('heroSub').textContent =
+    `${total} histoire${total !== 1 ? 's' : ''} · ${done} terminée${done !== 1 ? 's' : ''}`;
+  // store targets for animation
+  document.getElementById('statTotal').dataset.target = total;
+  document.getElementById('statDone').dataset.target  = done;
+  document.getElementById('statMins').dataset.target  = mins;
+}
+
+function animateStats() {
+  ['statTotal','statDone','statMins'].forEach(id => {
+    const el = document.getElementById(id);
+    const target = parseInt(el.dataset.target) || 0;
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const t = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur;
+      if (cur >= target) clearInterval(t);
+    }, 40);
+  });
+}
+
+/* ────────────────────────────────────────────
+   READING MODAL
+───────────────────────────────────────────── */
+function openRead(id) {
+  const s = allStories.find(s => s.id === id);
+  if (!s) return;
+
+  const emoji = THEME_EMOJIS[s.theme] || '📖';
+  document.getElementById('readTitle').textContent = `L'aventure de ${s.prenom}`;
+  document.getElementById('readEmoji').textContent = emoji;
+  document.getElementById('audioTitle').textContent = `L'aventure de ${s.prenom}`;
+
+  // Canvas starfield
+  initReadCanvas();
+
+  // Story text
+  const p = s.prenom;
+  document.getElementById('storyText').innerHTML = `
+    <p>Il était une fois, dans un univers lointain, un enfant courageux prénommé <strong>${p}</strong> qui rêvait de grandes aventures.</p>
+    <p>Un beau matin, ${p} découvrit une carte ancienne cachée sous son oreiller. Elle indiquait le chemin vers un trésor mystérieux, caché au cœur d'une forêt enchantée.</p>
+    <p>Sans hésiter, ${p} prit son sac, mit ses chaussures magiques et s'élança sur le sentier lumineux. Les arbres murmuraient des encouragements, les étoiles guidaient ses pas.</p>
+    <p>Après de nombreuses péripéties, ${p} trouva enfin le trésor : non pas de l'or ou des bijoux, mais un livre rempli d'histoires extraordinaires à partager avec ses amis.</p>
+    <p><em>Et ${p} comprit ce jour-là que la vraie richesse, c'est le bonheur que l'on offre aux autres. ✨</em></p>`;
+
+  // Illustrations
+  const emojis = ILLUS_EMOJIS[s.theme] || ['⭐','🌟','✨','💫','🌙'];
+  const grad = THEME_GRADIENTS[s.theme] || ['#1A1A2E','#2D1B69'];
+  document.getElementById('illusGrid').innerHTML = emojis.map((e, i) => `
+    <div class="illus-card" style="grid-column:${i===0?'span 2':''}">
+      <div class="illus-bg" style="background:linear-gradient(135deg,${grad[0]},${grad[1]})"></div>
+      <span class="illus-emoji" style="font-size:${i===0?'4rem':'3rem'};position:relative;z-index:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4))">${e}</span>
+    </div>`).join('');
+
+  // Progress tracking
+  updateProgress(id, Math.max(s.progress || 0, 10));
+
+  // Audio reset
+  resetAudio();
+  buildWave();
+
+  document.getElementById('readOverlay').classList.add('open');
+}
+
+function closeRead(e) {
+  if (e.target === document.getElementById('readOverlay')) closeReadModal();
+}
+function closeReadModal() {
+  document.getElementById('readOverlay').classList.remove('open');
+  stopAudio();
+}
+
+function initReadCanvas() {
+  const canvas = document.getElementById('readCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 860;
+  canvas.height = 200;
+  const pts = Array.from({length:60}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    r: Math.random()*1.5+.5, a: Math.random(), da: (Math.random()-.5)*.02,
+  }));
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p => {
+      p.a = Math.max(.1, Math.min(1, p.a + p.da));
+      if (p.a <= .1 || p.a >= 1) p.da *= -1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${p.a})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* ────────────────────────────────────────────
+   AUDIO PLAYER
+───────────────────────────────────────────── */
+function buildWave() {
+  const wrap = document.getElementById('waveBars');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 20; i++) {
+    const b = document.createElement('div');
+    b.className = 'wave-bar';
+    const h = (Math.random() * 20 + 6) | 0;
+    b.style.height = h + 'px';
+    b.style.setProperty('--h', (h / 10).toFixed(2));
+    b.style.animationDelay = (i * 0.05) + 's';
+    b.style.animationDuration = (.6 + Math.random() * .6) + 's';
+    wrap.appendChild(b);
+  }
+}
+
+function togglePlay() {
+  audioPlaying ? stopAudio() : startAudio();
+}
+function startAudio() {
+  audioPlaying = true;
+  document.getElementById('playBtn').textContent = '⏸';
+  document.querySelectorAll('.wave-bar').forEach(b => b.classList.add('playing'));
+  audioTimer = setInterval(() => {
+    audioCurrent = Math.min(audioCurrent + 1, audioDuration);
+    updateAudioUI();
+    if (audioCurrent >= audioDuration) stopAudio();
+  }, 1000);
+}
+function stopAudio() {
+  audioPlaying = false;
+  clearInterval(audioTimer);
+  document.getElementById('playBtn').textContent = '▶';
+  document.querySelectorAll('.wave-bar').forEach(b => b.classList.remove('playing'));
+}
+function resetAudio() {
+  stopAudio(); audioCurrent = 0; updateAudioUI();
+}
+function seekRelative(delta) {
+  audioCurrent = Math.max(0, Math.min(audioDuration, audioCurrent + delta));
+  updateAudioUI();
+}
+function seekProgress(e) {
+  const rect = document.getElementById('progressWrap').getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  audioCurrent = Math.round(ratio * audioDuration);
+  updateAudioUI();
+}
+function updateAudioUI() {
+  const pct = (audioCurrent / audioDuration * 100).toFixed(1) + '%';
+  document.getElementById('progressFill').style.width = pct;
+  document.getElementById('progressThumb').style.setProperty('--p', pct);
+  document.getElementById('timeCur').textContent = fmtTime(audioCurrent);
+  document.getElementById('timeTot').textContent = fmtTime(audioDuration);
+}
+function fmtTime(s) {
+  return `${(s/60|0)}:${String(s%60).padStart(2,'0')}`;
+}
+
+/* ────────────────────────────────────────────
+   SETTINGS MODAL
+───────────────────────────────────────────── */
+function openSettings() {
+  // Populate children list
+  const names = [...new Set(allStories.map(s => s.prenom).filter(Boolean))];
+  document.getElementById('childrenList').innerHTML = names.map(n =>
+    `<span style="background:var(--gs);border-radius:50px;padding:6px 14px;font-size:.875rem;font-weight:700;color:var(--v)">${n}</span>`
+  ).join('') || '<span style="color:var(--sub);font-size:.875rem">Aucun profil</span>';
+
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettingsModal();
+}
+function closeSettingsModal() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+function switchStab(btn, panel) {
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('s' + panel).classList.add('active');
+}
+function confirmDeleteAccount() {
+  showConfirm('⚠️', 'Supprimer mon compte ?', 'Toutes vos données seront définitivement effacées. Cette action est irréversible.', async () => {
+    try {
+      if (db && currentUser.uid !== 'demo') {
+        await db.collection('users').doc(currentUser.uid).delete();
+      }
+      if (auth && currentUser.delete) {
+        await currentUser.delete();
+      }
+      window.location.href = 'auth.html';
+    } catch(e) {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  });
+}
+
+/* ────────────────────────────────────────────
+   CONFIRM MODAL
+───────────────────────────────────────────── */
+function askDelete(id) {
+  showConfirm('🗑️', 'Supprimer cette histoire ?', 'Cette action est irréversible. L\'histoire sera définitivement effacée.', () => deleteHistoire(id));
+}
+function showConfirm(icon, title, text, action) {
+  document.getElementById('confirmIcon').textContent = icon;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmText').textContent = text;
+  document.getElementById('confirmActionBtn').onclick = () => { action(); closeConfirm(); };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+
+/* ────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+function toast(msg, type = 'info') {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span class="toast-msg">${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 3500);
+}
+
+/* ────────────────────────────────────────────
+   UTILS
+───────────────────────────────────────────── */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('avatarWrap');
+  if (!wrap.contains(e.target)) wrap.classList.remove('open');
+});
+document.getElementById('avatarBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('avatarWrap').classList.toggle('open');
+});
+
+// ESC closes modals
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeReadModal();
+    closeSettingsModal();
+    closeConfirm();
+  }
+});
+</script>
+</body>
+</html>

@@ -160,6 +160,20 @@ Langue : {langue}.`,
     MODE_TEST: true,
   },
 
+  // ─────────────────────────────────────────────
+  // FIREBASE — Auth + Stockage histoires
+  // Obtenir : https://console.firebase.google.com
+  // Crée un projet → Ajoute une app Web → Copie la config
+  // ─────────────────────────────────────────────
+  FIREBASE: {
+    API_KEY:           "REMPLACE_PAR_TON_API_KEY",
+    AUTH_DOMAIN:       "REMPLACE.firebaseapp.com",
+    PROJECT_ID:        "REMPLACE_PAR_TON_PROJECT_ID",
+    STORAGE_BUCKET:    "REMPLACE.appspot.com",
+    MESSAGING_SENDER_ID: "REMPLACE_PAR_TON_SENDER_ID",
+    APP_ID:            "REMPLACE_PAR_TON_APP_ID",
+  },
+
 };
 
 // Export pour utilisation en module ES6 ou Node.js

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion – TinyTale</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & VARIABLES ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple:      #6C63FF; --purple-light: #9B94FF;
+      --purple-dark: #4A43CC; --purple-pale:  #F0EFFE;
+      --gold:        #FFD166; --gold-dark:    #E6B800;
+      --gold-light:  #FFF0B3;
+      --night:       #1A1A2E; --night-mid:    #2D2B55;
+      --white:       #FFFFFF; --grey-light:   #F8F7FF;
+      --grey-mid:    #E8E6FF;
+      --text-dark:   #1A1A2E; --text-mid:     #4A4870;
+      --text-light:  #8886AA;
+      --success:     #22C55E; --error:        #EF4444;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'Nunito', sans-serif; background: var(--grey-light); color: var(--text-dark); overflow-x: hidden; }
+    h1, h2, h3 { font-family: 'Baloo 2', cursive; }
+    a { cursor: pointer; color: var(--purple); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { cursor: pointer; font-family: 'Nunito', sans-serif; }
+    input { font-family: 'Nunito', sans-serif; }
+
+    /* ── TOASTS ─────────────────────────────────────────── */
+    #tc {
+      position: fixed; top: 20px; right: 20px; z-index: 10000;
+      display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 18px; border-radius: 12px;
+      font-size: .88rem; font-weight: 600;
+      min-width: 260px; max-width: 360px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+      animation: tIn .3s ease; pointer-events: all;
+      transition: opacity .3s;
+    }
+    .toast.success { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
+    .toast.error   { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+    .toast.info    { background:var(--purple-pale); border:1px solid var(--grey-mid); color:var(--purple-dark); }
+    @keyframes tIn { from{transform:translateX(80px);opacity:0} to{transform:none;opacity:1} }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    .auth-layout { display: flex; min-height: 100vh; }
+
+    /* ── LEFT PANEL ──────────────────────────────────────── */
+    .auth-left {
+      width: 40%; background: var(--night);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #stars { position: absolute; inset: 0; }
+    .star {
+      position: absolute; border-radius: 50%; background: #fff;
+      animation: twinkle 3s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from{opacity:.1;transform:scale(1)} to{opacity:.9;transform:scale(1.3)} }
+
+    .left-inner {
+      position: relative; z-index: 1; padding: 52px 44px; text-align: center;
+    }
+    .left-logo {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-bottom: 36px;
+      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; color: #fff;
+    }
+    .left-logo .acc { color: var(--gold); }
+    .left-tagline {
+      font-family: 'Baloo 2', cursive; font-size: 1.45rem; font-weight: 700;
+      color: #fff; line-height: 1.45; margin-bottom: 40px;
+    }
+    .left-bullets { list-style: none; display: flex; flex-direction: column; gap: 16px; text-align: left; }
+    .left-bullets li {
+      display: flex; align-items: center; gap: 14px;
+      color: rgba(255,255,255,.82); font-size: .95rem; font-weight: 600;
+    }
+    .bullet-ico {
+      width: 38px; height: 38px; flex-shrink: 0;
+      background: rgba(255,209,102,.14); border: 1px solid rgba(255,209,102,.3);
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .star-deco {
+      position: absolute; bottom: -30px; right: -30px;
+      font-size: 9rem; color: rgba(108,99,255,.15);
+      font-family: 'Baloo 2', cursive; user-select: none;
+      animation: rot 25s linear infinite;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── RIGHT PANEL ─────────────────────────────────────── */
+    .auth-right {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px; background: var(--grey-light); overflow-y: auto;
+    }
+    .auth-card {
+      background: var(--white); border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(108,99,255,.11), 0 4px 16px rgba(0,0,0,.06);
+      padding: 44px 40px; width: 100%; max-width: 480px;
+    }
+    .card-logo {
+      display: none; align-items: center; justify-content: center;
+      gap: 10px; font-family: 'Baloo 2', cursive;
+      font-size: 1.5rem; font-weight: 800; margin-bottom: 28px;
+      color: var(--text-dark);
+    }
+    .card-logo .acc { color: var(--purple); }
+
+    /* ── TABS ────────────────────────────────────────────── */
+    .tab-bar {
+      position: relative; display: flex; background: var(--grey-light);
+      border-radius: 50px; padding: 4px; margin-bottom: 32px;
+    }
+    .tab-pill {
+      position: absolute; top: 4px; height: calc(100% - 8px);
+      background: var(--purple); border-radius: 50px;
+      transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
+      z-index: 0; pointer-events: none;
+    }
+    .tab-btn {
+      flex: 1; position: relative; z-index: 1; padding: 11px;
+      border: none; background: transparent; border-radius: 50px;
+      font-size: .93rem; font-weight: 700; color: var(--text-light);
+      transition: color .3s;
+    }
+    .tab-btn.on { color: #fff; }
+
+    /* ── FORM PANELS ─────────────────────────────────────── */
+    .fpanel { display: none; }
+    .fpanel.on { display: block; animation: fin .35s ease; }
+    @keyframes fin { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+    .form-title { font-size: 1.65rem; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
+    .form-sub   { font-size: .88rem; color: var(--text-light); margin-bottom: 22px; }
+
+    /* ── GOOGLE BTN ──────────────────────────────────────── */
+    .btn-google {
+      width: 100%; display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 13px 20px;
+      background: var(--white); border: 1.5px solid var(--grey-mid); border-radius: 14px;
+      font-size: .97rem; font-weight: 700; color: var(--text-dark);
+      transition: box-shadow .2s, transform .15s, border-color .2s;
+      position: relative; overflow: hidden;
+    }
+    .btn-google:hover { box-shadow: 0 6px 22px rgba(108,99,255,.15); transform: scale(1.01); border-color: var(--purple-light); }
+
+    /* ── SEPARATOR ───────────────────────────────────────── */
+    .sep {
+      display: flex; align-items: center; gap: 12px;
+      margin: 18px 0; color: var(--text-light); font-size: .8rem; font-weight: 600;
+    }
+    .sep::before, .sep::after { content: ''; flex: 1; height: 1px; background: var(--grey-mid); }
+
+    /* ── FLOATING LABELS ─────────────────────────────────── */
+    .fl { position: relative; margin-bottom: 14px; }
+    .fl-in {
+      width: 100%; padding: 20px 46px 8px 16px;
+      background: var(--grey-light); border: 1.5px solid var(--grey-mid);
+      border-radius: 12px; font-size: 1rem; font-weight: 600; color: var(--text-dark);
+      outline: none; transition: border-color .25s, background .25s;
+      caret-color: var(--purple);
+    }
+    .fl-in:focus { border-color: var(--purple); background: var(--purple-pale); }
+    .fl-in.err   { border-color: var(--error); }
+    .fl-lb {
+      position: absolute; left: 16px; top: 14px;
+      font-size: 1rem; color: var(--text-light); font-weight: 600;
+      pointer-events: none; transform-origin: left center;
+      transition: transform .25s, color .25s;
+    }
+    .fl-in:focus ~ .fl-lb,
+    .fl-in:not(:placeholder-shown) ~ .fl-lb {
+      transform: translateY(-10px) scale(.72); color: var(--purple);
+    }
+    .fl-in.err ~ .fl-lb { color: var(--error); }
+    .fl-ico { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
+    .fl-eye {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; font-size: 1rem;
+      color: var(--text-light); padding: 4px; z-index: 2;
+      transition: color .2s;
+    }
+    .fl-eye:hover { color: var(--purple); }
+    .ferr {
+      font-size: .75rem; color: var(--error); margin-top: -6px;
+      margin-bottom: 8px; display: none;
+    }
+
+    /* ── PASSWORD STRENGTH ───────────────────────────────── */
+    .pw-s { margin-top: -6px; margin-bottom: 12px; }
+    .pw-s-bar { height: 4px; border-radius: 2px; background: var(--grey-mid); overflow: hidden; }
+    .pw-s-fill { height: 100%; border-radius: 2px; width: 0%; transition: width .3s, background .3s; }
+    .pw-s-lbl { font-size: .72rem; font-weight: 700; margin-top: 4px; color: var(--text-light); }
+
+    /* ── FORM HELPERS ────────────────────────────────────── */
+    .fhelper { display: flex; justify-content: flex-end; margin-top: -6px; margin-bottom: 18px; }
+    .fhelper a { font-size: .8rem; font-weight: 600; color: var(--text-light); }
+    .fhelper a:hover { color: var(--purple); }
+    .fswitch { text-align: center; font-size: .86rem; color: var(--text-light); margin-top: 18px; }
+    .fswitch a { color: var(--purple); font-weight: 700; }
+
+    /* ── CHECKBOX ────────────────────────────────────────── */
+    .ck-wrap { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
+    .ck-wrap input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--purple); flex-shrink: 0; }
+    .ck-wrap label { font-size: .83rem; color: var(--text-mid); cursor: pointer; line-height: 1.5; }
+
+    /* ── BUTTONS ─────────────────────────────────────────── */
+    .btn-primary {
+      width: 100%; padding: 14px; border-radius: 50px;
+      background: var(--purple); color: #fff;
+      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 700;
+      border: none; box-shadow: 0 4px 20px rgba(108,99,255,.35);
+      transition: background .2s, transform .15s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary:hover { background: var(--purple-dark); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,.45); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .btn-gold {
+      width: 100%; padding: 14px; border-radius: 50px;
+      background: var(--gold); color: var(--night);
+      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800;
+      border: none; box-shadow: 0 4px 20px rgba(255,209,102,.38);
+      transition: background .2s, transform .15s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      position: relative; overflow: hidden;
+    }
+    .btn-gold:hover { background: var(--gold-dark); transform: translateY(-2px); }
+    .btn-gold:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      flex: 1; padding: 13px; border-radius: 50px;
+      background: var(--grey-light); color: var(--text-mid);
+      font-family: 'Nunito', sans-serif; font-size: .93rem; font-weight: 700;
+      border: 1.5px solid var(--grey-mid); transition: background .2s;
+    }
+    .btn-ghost:hover { background: var(--grey-mid); }
+
+    /* Button spinner */
+    .bspin {
+      width: 17px; height: 17px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+      animation: spin .7s linear infinite; display: none; flex-shrink: 0;
+    }
+    .bspin.dark { border-color: rgba(26,26,46,.25); border-top-color: var(--night); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RIPPLE ──────────────────────────────────────────── */
+    .rip {
+      position: absolute; border-radius: 50%; transform: scale(0);
+      background: rgba(255,255,255,.22); animation: ripa .6s linear; pointer-events: none;
+    }
+    @keyframes ripa { to{transform:scale(4);opacity:0} }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .mo {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,26,46,.65); backdrop-filter: blur(8px);
+      z-index: 5000; align-items: center; justify-content: center; padding: 24px;
+    }
+    .mo.on { display: flex; }
+    .mo-box {
+      background: #fff; border-radius: 22px; padding: 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.2);
+      animation: moin .3s ease;
+    }
+    @keyframes moin { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+    .mo-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 7px; }
+    .mo-sub   { font-size: .87rem; color: var(--text-light); margin-bottom: 22px; }
+    .mo-acts  { display: flex; gap: 10px; margin-top: 18px; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .auth-left { display: none; }
+      .auth-right { padding: 24px 16px; }
+      .auth-card { padding: 32px 22px; }
+      .card-logo { display: flex; }
+    }
+    @media (max-width: 375px) {
+      .auth-card { padding: 24px 14px; }
+      .form-title { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toasts -->
+<div id="tc"></div>
+
+<!-- Modal reset password -->
+<div class="mo" id="mo-reset">
+  <div class="mo-box">
+    <h3 class="mo-title">🔐 Mot de passe oublié ?</h3>
+    <p class="mo-sub">Entre ton adresse email — nous t'envoyons un lien de réinitialisation.</p>
+    <div class="fl">
+      <input type="email" id="reset-email" class="fl-in" placeholder=" ">
+      <label class="fl-lb" for="reset-email">Ton email</label>
+      <span class="fl-ico">📧</span>
+    </div>
+    <div class="mo-acts">
+      <button class="btn-ghost" onclick="closeMo('mo-reset')">Annuler</button>
+      <button class="btn-primary" id="reset-btn" onclick="handleReset()" style="flex:1">
+        <div class="bspin" id="reset-spin"></div>
+        <span id="reset-lbl">Envoyer</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="auth-layout">
+
+  <!-- ══ GAUCHE ══ -->
+  <div class="auth-left">
+    <div id="stars"></div>
+    <div class="left-inner">
+      <div class="left-logo">
+        <img src="logo.png" height="44" alt="">
+        <span>Tiny<span class="acc">Tale</span></span>
+      </div>
+      <h1 class="left-tagline">Des histoires magiques<br>créés rien que pour<br>votre enfant</h1>
+      <ul class="left-bullets">
+        <li><span class="bullet-ico">⭐</span>Retrouve toutes tes histoires</li>
+        <li><span class="bullet-ico">🎙️</span>Écoute à tout moment</li>
+        <li><span class="bullet-ico">📖</span>Crée de nouvelles aventures</li>
+      </ul>
+    </div>
+    <div class="star-deco" aria-hidden="true">✦</div>
+  </div>
+
+  <!-- ══ DROITE ══ -->
+  <div class="auth-right">
+    <div class="auth-card">
+
+      <!-- Logo mobile -->
+      <div class="card-logo">
+        <img src="logo.png" height="40" alt="">
+        <span>Tiny<span class="acc">Tale</span></span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar" id="tabbar">
+        <div class="tab-pill" id="pill"></div>
+        <button class="tab-btn on" id="tb-login" onclick="switchTab('login')">Connexion</button>
+        <button class="tab-btn"    id="tb-signup" onclick="switchTab('signup')">Inscription</button>
+      </div>
+
+      <!-- ─── CONNEXION ─── -->
+      <div class="fpanel on" id="p-login">
+        <h2 class="form-title">Bon retour ! 👋</h2>
+        <p class="form-sub">Retrouve tes histoires magiques</p>
+
+        <button class="btn-google" id="gg-login" onclick="doGoogle()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continuer avec Google
+        </button>
+
+        <div class="sep"><span>ou</span></div>
+
+        <div class="fl">
+          <input type="email" id="l-email" class="fl-in" placeholder=" " autocomplete="email">
+          <label class="fl-lb" for="l-email">Email</label>
+          <span class="fl-ico">📧</span>
+        </div>
+        <div class="ferr" id="l-email-e"></div>
+
+        <div class="fl">
+          <input type="password" id="l-pw" class="fl-in" placeholder=" " autocomplete="current-password">
+          <label class="fl-lb" for="l-pw">Mot de passe</label>
+          <button type="button" class="fl-eye" onclick="toggleEye('l-pw',this)" aria-label="Voir mot de passe">👁</button>
+        </div>
+        <div class="ferr" id="l-pw-e"></div>
+
+        <div class="fhelper">
+          <a onclick="openMo('mo-reset')">Mot de passe oublié ?</a>
+        </div>
+
+        <button class="btn-primary" id="l-btn" onclick="doLogin(event)">
+          <div class="bspin" id="l-spin"></div>
+          <span id="l-lbl">Se connecter</span>
+        </button>
+
+        <p class="fswitch">Pas encore de compte ? <a onclick="switchTab('signup')">Créer un compte →</a></p>
+      </div>
+
+      <!-- ─── INSCRIPTION ─── -->
+      <div class="fpanel" id="p-signup">
+        <h2 class="form-title">Créer mon compte ✨</h2>
+        <p class="form-sub">Rejoins +500 familles TinyTale</p>
+
+        <button class="btn-google" id="gg-signup" onclick="doGoogle()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continuer avec Google
+        </button>
+
+        <div class="sep"><span>ou</span></div>
+
+        <div class="fl">
+          <input type="text" id="s-prenom" class="fl-in" placeholder=" " autocomplete="given-name">
+          <label class="fl-lb" for="s-prenom">Prénom</label>
+          <span class="fl-ico">👤</span>
+        </div>
+        <div class="ferr" id="s-prenom-e"></div>
+
+        <div class="fl">
+          <input type="email" id="s-email" class="fl-in" placeholder=" " autocomplete="email">
+          <label class="fl-lb" for="s-email">Email</label>
+          <span class="fl-ico">📧</span>
+        </div>
+        <div class="ferr" id="s-email-e"></div>
+
+        <div class="fl">
+          <input type="password" id="s-pw" class="fl-in" placeholder=" " autocomplete="new-password" oninput="pwStrength(this.value)">
+          <label class="fl-lb" for="s-pw">Mot de passe</label>
+          <button type="button" class="fl-eye" onclick="toggleEye('s-pw',this)" aria-label="Voir mot de passe">👁</button>
+        </div>
+        <div class="pw-s">
+          <div class="pw-s-bar"><div class="pw-s-fill" id="pw-fill"></div></div>
+          <p class="pw-s-lbl" id="pw-lbl"></p>
+        </div>
+        <div class="ferr" id="s-pw-e"></div>
+
+        <div class="fl">
+          <input type="password" id="s-conf" class="fl-in" placeholder=" " autocomplete="new-password">
+          <label class="fl-lb" for="s-conf">Confirmer le mot de passe</label>
+          <button type="button" class="fl-eye" onclick="toggleEye('s-conf',this)" aria-label="Voir mot de passe">👁</button>
+        </div>
+        <div class="ferr" id="s-conf-e"></div>
+
+        <div class="ck-wrap">
+          <input type="checkbox" id="ck-cgv">
+          <label for="ck-cgv">J'accepte les <a href="#">CGV</a> et la <a href="#">politique de confidentialité</a></label>
+        </div>
+        <div class="ferr" id="s-cgv-e"></div>
+
+        <button class="btn-gold" id="s-btn" onclick="doSignup(event)">
+          <div class="bspin dark" id="s-spin"></div>
+          <span id="s-lbl">Créer mon compte</span>
+        </button>
+
+        <p class="fswitch">Déjà un compte ? <a onclick="switchTab('login')">Se connecter →</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── FIREBASE INIT ─────────────────────────────────────── */
+let auth, db;
+try {
+  const fbCfg = TINYTALE_CONFIG.FIREBASE;
+  const app = firebase.apps.length
+    ? firebase.app()
+    : firebase.initializeApp({
+        apiKey:            fbCfg.API_KEY,
+        authDomain:        fbCfg.AUTH_DOMAIN,
+        projectId:         fbCfg.PROJECT_ID,
+        storageBucket:     fbCfg.STORAGE_BUCKET,
+        messagingSenderId: fbCfg.MESSAGING_SENDER_ID,
+        appId:             fbCfg.APP_ID,
+      });
+  auth = firebase.auth();
+  db   = firebase.firestore();
+} catch (e) {
+  console.warn('Firebase non configuré :', e.message);
+}
+
+/* Redirection si déjà connecté */
+if (auth) {
+  auth.onAuthStateChanged(user => {
+    if (user) window.location.href = 'library.html';
+  });
+}
+
+/* ─── ÉTOILES ───────────────────────────────────────────── */
+const sc = document.getElementById('stars');
+for (let i = 0; i < 65; i++) {
+  const s = document.createElement('div'); s.className = 'star';
+  const sz = Math.random() * 2.4 + 0.4;
+  s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${1.8+Math.random()*3}s`;
+  sc.appendChild(s);
+}
+
+/* ─── TOAST ─────────────────────────────────────────────── */
+function toast(type, msg, ms = 4000) {
+  const t = document.createElement('div'); t.className = `toast ${type}`;
+  const ico = { success:'✅', error:'❌', info:'📧' };
+  t.textContent = (ico[type]||'') + ' ' + msg;
+  document.getElementById('tc').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 310); }, ms);
+}
+
+/* ─── TAB SWITCH ────────────────────────────────────────── */
+function switchTab(tab) {
+  const tbl = document.getElementById('tb-login');
+  const tbs = document.getElementById('tb-signup');
+  const pl  = document.getElementById('p-login');
+  const ps  = document.getElementById('p-signup');
+  const pil = document.getElementById('pill');
+
+  /* Position pill over the active button */
+  const activeBtn = tab === 'login' ? tbl : tbs;
+  pil.style.left  = activeBtn.offsetLeft + 'px';
+  pil.style.width = activeBtn.offsetWidth + 'px';
+
+  tbl.classList.toggle('on', tab === 'login');
+  tbs.classList.toggle('on', tab === 'signup');
+  pl.classList.toggle('on', tab === 'login');
+  ps.classList.toggle('on', tab === 'signup');
+
+  clearErrors();
+}
+
+/* Init pill position */
+window.addEventListener('load', () => {
+  const btn = document.getElementById('tb-login');
+  const pil = document.getElementById('pill');
+  pil.style.left  = btn.offsetLeft + 'px';
+  pil.style.width = btn.offsetWidth + 'px';
+});
+
+/* ─── BUTTON LOADER ─────────────────────────────────────── */
+function setBtn(id, spinId, lblId, loading, txt = '') {
+  const btn = document.getElementById(id);
+  const sp  = document.getElementById(spinId);
+  const lb  = document.getElementById(lblId);
+  btn.disabled = loading;
+  sp.style.display = loading ? 'block' : 'none';
+  if (txt) lb.textContent = txt;
+}
+
+/* ─── EYE TOGGLE ────────────────────────────────────────── */
+function toggleEye(id, btn) {
+  const el = document.getElementById(id);
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+}
+
+/* ─── PASSWORD STRENGTH ─────────────────────────────────── */
+function pwStrength(v) {
+  let s = 0;
+  if (v.length >= 6) s++;
+  if (v.length >= 10) s++;
+  if (/[A-Z]/.test(v)) s++;
+  if (/\d/.test(v)) s++;
+  if (/[^A-Za-z0-9]/.test(v)) s++;
+  const lvl = [
+    {w:'0%',  c:'',           t:''},
+    {w:'20%', c:'#EF4444',    t:'🔴 Trop court'},
+    {w:'45%', c:'#F97316',    t:'🟠 Faible'},
+    {w:'65%', c:'#EAB308',    t:'🟡 Moyen'},
+    {w:'85%', c:'#22C55E',    t:'🟢 Fort'},
+    {w:'100%',c:'#16A34A',    t:'🟢 Très fort'},
+  ][s] || {w:'0%',c:'',t:''};
+  const f = document.getElementById('pw-fill');
+  const l = document.getElementById('pw-lbl');
+  f.style.width = v ? lvl.w : '0%';
+  f.style.background = lvl.c;
+  l.textContent = v ? lvl.t : '';
+  l.style.color = lvl.c;
+}
+
+/* ─── VALIDATION HELPERS ────────────────────────────────── */
+function showErr(id, msg) {
+  const e = document.getElementById(id);
+  if (e) { e.textContent = msg; e.style.display = 'block'; }
+}
+function clearErrors() {
+  document.querySelectorAll('.ferr').forEach(e => { e.style.display = 'none'; e.textContent = ''; });
+  document.querySelectorAll('.fl-in').forEach(i => i.classList.remove('err'));
+}
+
+/* ─── GOOGLE AUTH ───────────────────────────────────────── */
+async function doGoogle() {
+  if (!auth) { toast('error', 'Firebase non configuré'); return; }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await auth.signInWithPopup(provider);
+    await ensureProfile(result.user);
+    toast('success', `Bienvenue ${result.user.displayName || ''} ! 🎉`);
+    setTimeout(() => window.location.href = 'library.html', 1400);
+  } catch (e) {
+    if (e.code !== 'auth/popup-closed-by-user') toast('error', fireMsg(e.code));
+  }
+}
+
+/* ─── EMAIL LOGIN ───────────────────────────────────────── */
+async function doLogin(e) {
+  e.preventDefault(); clearErrors();
+  const email = document.getElementById('l-email').value.trim();
+  const pw    = document.getElementById('l-pw').value;
+  if (!email) { showErr('l-email-e', 'Email requis'); return; }
+  if (!pw)    { showErr('l-pw-e', 'Mot de passe requis'); return; }
+  if (!auth)  { toast('error', 'Firebase non configuré'); return; }
+
+  setBtn('l-btn','l-spin','l-lbl', true, 'Connexion…');
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    toast('success', 'Connexion réussie ! Redirection…');
+    setTimeout(() => window.location.href = 'library.html', 1400);
+  } catch (err) {
+    toast('error', fireMsg(err.code));
+    setBtn('l-btn','l-spin','l-lbl', false, 'Se connecter');
+  }
+}
+
+/* ─── EMAIL SIGNUP ──────────────────────────────────────── */
+async function doSignup(e) {
+  e.preventDefault(); clearErrors();
+  const prenom = document.getElementById('s-prenom').value.trim();
+  const email  = document.getElementById('s-email').value.trim();
+  const pw     = document.getElementById('s-pw').value;
+  const conf   = document.getElementById('s-conf').value;
+  const cgv    = document.getElementById('ck-cgv').checked;
+
+  let ok = true;
+  if (!prenom)       { showErr('s-prenom-e', 'Prénom requis'); ok = false; }
+  if (!email)        { showErr('s-email-e', 'Email requis'); ok = false; }
+  if (pw.length < 6) { showErr('s-pw-e', 'Minimum 6 caractères'); ok = false; }
+  if (pw !== conf)   { showErr('s-conf-e', 'Les mots de passe ne correspondent pas'); ok = false; }
+  if (!cgv)          { showErr('s-cgv-e', 'Accepte les CGV pour continuer'); ok = false; }
+  if (!ok || !auth)  { if (!auth) toast('error', 'Firebase non configuré'); return; }
+
+  setBtn('s-btn','s-spin','s-lbl', true, 'Création…');
+  try {
+    const r = await auth.createUserWithEmailAndPassword(email, pw);
+    await r.user.updateProfile({ displayName: prenom });
+    await ensureProfile(r.user, prenom);
+    toast('success', `Bienvenue ${prenom} ! ✨`);
+    setTimeout(() => window.location.href = 'library.html', 1400);
+  } catch (err) {
+    toast('error', fireMsg(err.code));
+    setBtn('s-btn','s-spin','s-lbl', false, 'Créer mon compte');
+  }
+}
+
+/* ─── FIRESTORE — PROFIL ────────────────────────────────── */
+async function ensureProfile(user, prenom = null) {
+  if (!db) return;
+  const ref = db.collection('users').doc(user.uid);
+  const doc = await ref.get();
+  if (!doc.exists) {
+    await ref.set({
+      uid:    user.uid,
+      prenom: prenom || user.displayName || 'Utilisateur',
+      email:  user.email,
+      photoURL: user.photoURL || null,
+      plan:   'gratuit',
+      histoiresRestantes: 1,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+}
+
+/* ─── RESET PASSWORD ────────────────────────────────────── */
+async function handleReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  if (!email) { toast('error', 'Entrez votre email'); return; }
+  if (!auth)  { toast('error', 'Firebase non configuré'); return; }
+  setBtn('reset-btn','reset-spin','reset-lbl', true, 'Envoi…');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('info', 'Email de réinitialisation envoyé !');
+    closeMo('mo-reset');
+  } catch (err) {
+    toast('error', fireMsg(err.code));
+  } finally {
+    setBtn('reset-btn','reset-spin','reset-lbl', false, 'Envoyer');
+  }
+}
+
+/* ─── MODAL HELPERS ─────────────────────────────────────── */
+function openMo(id)  { document.getElementById(id).classList.add('on'); }
+function closeMo(id) { document.getElementById(id).classList.remove('on'); document.getElementById('reset-email').value = ''; }
+document.getElementById('mo-reset').addEventListener('click', e => { if (e.target === e.currentTarget) closeMo('mo-reset'); });
+
+/* ─── FIREBASE ERROR MESSAGES ───────────────────────────── */
+function fireMsg(code) {
+  return ({
+    'auth/user-not-found':         'Aucun compte avec cet email',
+    'auth/wrong-password':         'Mot de passe incorrect',
+    'auth/invalid-credential':     'Email ou mot de passe incorrect',
+    'auth/email-already-in-use':   'Cet email est déjà utilisé',
+    'auth/weak-password':          'Mot de passe trop faible (6 car. min)',
+    'auth/invalid-email':          'Email invalide',
+    'auth/popup-closed-by-user':   'Connexion annulée',
+    'auth/too-many-requests':      'Trop de tentatives. Réessaie dans 1 minute.',
+    'auth/network-request-failed': 'Problème de connexion réseau',
+  })[code] || 'Une erreur est survenue. Réessaie.';
+}
+
+/* ─── RIPPLE ────────────────────────────────────────────── */
+document.querySelectorAll('.btn-primary,.btn-gold,.btn-google').forEach(btn => {
+  btn.addEventListener('click', ev => {
+    const r = document.createElement('span'); r.className = 'rip';
+    const rc = btn.getBoundingClientRect(), sz = Math.max(rc.width, rc.height) * 2;
+    r.style.cssText = `width:${sz}px;height:${sz}px;left:${ev.clientX-rc.left-sz/2}px;top:${ev.clientY-rc.top-sz/2}px`;
+    btn.appendChild(r); r.addEventListener('animationend', () => r.remove());
+  });
+});
+</script>
+</body>
+</html>
