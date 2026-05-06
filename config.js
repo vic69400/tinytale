@@ -166,12 +166,13 @@ Langue : {langue}.`,
   // Crée un projet → Ajoute une app Web → Copie la config
   // ─────────────────────────────────────────────
   FIREBASE: {
-    API_KEY:           "REMPLACE_PAR_TON_API_KEY",
-    AUTH_DOMAIN:       "REMPLACE.firebaseapp.com",
-    PROJECT_ID:        "REMPLACE_PAR_TON_PROJECT_ID",
-    STORAGE_BUCKET:    "REMPLACE.appspot.com",
-    MESSAGING_SENDER_ID: "REMPLACE_PAR_TON_SENDER_ID",
-    APP_ID:            "REMPLACE_PAR_TON_APP_ID",
+    API_KEY:             "AIzaSyCl4DaUOML2JqXcfOzpM5TobnLGBjFCasg",
+    AUTH_DOMAIN:         "tinytale-4203f.firebaseapp.com",
+    PROJECT_ID:          "tinytale-4203f",
+    STORAGE_BUCKET:      "tinytale-4203f.firebasestorage.app",
+    MESSAGING_SENDER_ID: "35404819260",
+    APP_ID:              "1:35404819260:web:5589de686180161dc78c39",
+    MEASUREMENT_ID:      "G-Q5K5DB575X",
   },
 
 };

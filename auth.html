@@ -1,470 +1,461 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion – TinyTale</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — TinyTale</title>
+  <!-- Firebase CDN compat -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <script src="config.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
-    /* ── RESET & VARIABLES ─────────────────────────────── */
+    /* ── RESET & VARIABLES ───────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --purple:      #6C63FF; --purple-light: #9B94FF;
-      --purple-dark: #4A43CC; --purple-pale:  #F0EFFE;
-      --gold:        #FFD166; --gold-dark:    #E6B800;
-      --gold-light:  #FFF0B3;
-      --night:       #1A1A2E; --night-mid:    #2D2B55;
-      --white:       #FFFFFF; --grey-light:   #F8F7FF;
-      --grey-mid:    #E8E6FF;
-      --text-dark:   #1A1A2E; --text-mid:     #4A4870;
-      --text-light:  #8886AA;
-      --success:     #22C55E; --error:        #EF4444;
+      --purple:       #6C63FF; --purple-light: #9B94FF;
+      --purple-dark:  #4A43CC; --purple-pale:  #F0EFFE;
+      --gold:         #FFD166; --gold-dark:    #E6B800;
+      --gold-light:   #FFF0B3; --night:        #1A1A2E;
+      --night-mid:    #2D2B55; --white:        #FFFFFF;
+      --grey-light:   #F8F7FF; --grey-mid:     #E8E6FF;
+      --text-dark:    #1A1A2E; --text-mid:     #4A4870;
+      --text-light:   #8886AA; --success:      #22C55E;
+      --error:        #EF4444;
     }
     html, body { height: 100%; }
     body { font-family: 'Nunito', sans-serif; background: var(--grey-light); color: var(--text-dark); overflow-x: hidden; }
     h1, h2, h3 { font-family: 'Baloo 2', cursive; }
     a { cursor: pointer; color: var(--purple); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    button { cursor: pointer; font-family: 'Nunito', sans-serif; }
-    input { font-family: 'Nunito', sans-serif; }
+    button, input { font-family: 'Nunito', sans-serif; }
 
-    /* ── TOASTS ─────────────────────────────────────────── */
+    /* ── TOAST NOTIFICATIONS ─────────────────────── */
     #tc {
       position: fixed; top: 20px; right: 20px; z-index: 10000;
-      display: flex; flex-direction: column; gap: 10px;
-      pointer-events: none;
+      display: flex; flex-direction: column; gap: 10px; pointer-events: none;
     }
     .toast {
       display: flex; align-items: center; gap: 10px;
       padding: 13px 18px; border-radius: 12px;
       font-size: .88rem; font-weight: 600;
       min-width: 260px; max-width: 360px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+      box-shadow: 0 8px 30px rgba(0,0,0,.14);
       animation: tIn .3s ease; pointer-events: all;
-      transition: opacity .3s;
     }
     .toast.success { background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; }
     .toast.error   { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
     .toast.info    { background:var(--purple-pale); border:1px solid var(--grey-mid); color:var(--purple-dark); }
     @keyframes tIn { from{transform:translateX(80px);opacity:0} to{transform:none;opacity:1} }
 
-    /* ── LAYOUT ──────────────────────────────────────────── */
+    /* ── LAYOUT ──────────────────────────────────── */
     .auth-layout { display: flex; min-height: 100vh; }
 
-    /* ── LEFT PANEL ──────────────────────────────────────── */
+    /* ── LEFT PANEL ──────────────────────────────── */
     .auth-left {
       width: 40%; background: var(--night);
       position: relative; overflow: hidden;
       display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
-    #stars { position: absolute; inset: 0; }
-    .star {
-      position: absolute; border-radius: 50%; background: #fff;
-      animation: twinkle 3s ease-in-out infinite alternate;
+    #starsCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* Decorative rotating star */
+    .deco-star {
+      position: absolute; right: -90px; bottom: -70px;
+      width: 380px; height: 380px; opacity: .06;
+      animation: rotateStar 24s linear infinite;
+      pointer-events: none;
     }
-    @keyframes twinkle { from{opacity:.1;transform:scale(1)} to{opacity:.9;transform:scale(1.3)} }
+    @keyframes rotateStar { to { transform: rotate(360deg); } }
 
     .left-inner {
-      position: relative; z-index: 1; padding: 52px 44px; text-align: center;
+      position: relative; z-index: 1;
+      padding: 60px 48px; text-align: center; width: 100%;
     }
     .left-logo {
       display: flex; align-items: center; justify-content: center;
-      gap: 12px; margin-bottom: 36px;
-      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; color: #fff;
+      gap: 12px; margin-bottom: 40px; text-decoration: none;
     }
-    .left-logo .acc { color: var(--gold); }
+    .left-logo-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--purple), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Baloo 2', cursive; font-size: 1.7rem; font-weight: 800; color: #fff;
+      box-shadow: 0 8px 24px rgba(108,99,255,.45);
+    }
+    .left-logo-text {
+      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800;
+      color: #fff; letter-spacing: -1px;
+    }
+    .left-logo-text span { color: var(--gold); }
+
     .left-tagline {
-      font-family: 'Baloo 2', cursive; font-size: 1.45rem; font-weight: 700;
-      color: #fff; line-height: 1.45; margin-bottom: 40px;
+      font-family: 'Baloo 2', cursive; font-size: 1.55rem; font-weight: 700;
+      color: #fff; line-height: 1.35; margin-bottom: 40px;
     }
-    .left-bullets { list-style: none; display: flex; flex-direction: column; gap: 16px; text-align: left; }
+    .left-tagline em { color: var(--gold); font-style: normal; }
+
+    .left-bullets { list-style: none; text-align: left; display: inline-flex; flex-direction: column; gap: 20px; }
     .left-bullets li {
       display: flex; align-items: center; gap: 14px;
-      color: rgba(255,255,255,.82); font-size: .95rem; font-weight: 600;
+      color: rgba(255,255,255,.85); font-size: .97rem; font-weight: 600;
     }
-    .bullet-ico {
-      width: 38px; height: 38px; flex-shrink: 0;
-      background: rgba(255,209,102,.14); border: 1px solid rgba(255,209,102,.3);
-      border-radius: 11px;
-      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    .bullet-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,209,102,.12); border: 1px solid rgba(255,209,102,.22);
+      display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
     }
-    .star-deco {
-      position: absolute; bottom: -30px; right: -30px;
-      font-size: 9rem; color: rgba(108,99,255,.15);
-      font-family: 'Baloo 2', cursive; user-select: none;
-      animation: rot 25s linear infinite;
-    }
-    @keyframes rot { to { transform: rotate(360deg); } }
 
-    /* ── RIGHT PANEL ─────────────────────────────────────── */
+    /* ── RIGHT PANEL ─────────────────────────────── */
     .auth-right {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      padding: 40px 24px; background: var(--grey-light); overflow-y: auto;
+      flex: 1; background: var(--grey-light);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 24px;
     }
     .auth-card {
       background: var(--white); border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(108,99,255,.11), 0 4px 16px rgba(0,0,0,.06);
-      padding: 44px 40px; width: 100%; max-width: 480px;
+      box-shadow: 0 16px 64px rgba(108,99,255,.12);
+      padding: 40px 44px; width: 100%; max-width: 480px;
     }
+
+    /* Mobile logo */
     .card-logo {
       display: none; align-items: center; justify-content: center;
-      gap: 10px; font-family: 'Baloo 2', cursive;
-      font-size: 1.5rem; font-weight: 800; margin-bottom: 28px;
-      color: var(--text-dark);
+      gap: 10px; margin-bottom: 28px; text-decoration: none;
     }
-    .card-logo .acc { color: var(--purple); }
+    .card-logo-icon {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--purple), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 800; color: #fff;
+    }
+    .card-logo-text {
+      font-family: 'Baloo 2', cursive; font-size: 1.55rem; font-weight: 800;
+      color: var(--text-dark); letter-spacing: -.5px;
+    }
+    .card-logo-text span { color: var(--purple); }
 
-    /* ── TABS ────────────────────────────────────────────── */
-    .tab-bar {
-      position: relative; display: flex; background: var(--grey-light);
-      border-radius: 50px; padding: 4px; margin-bottom: 32px;
+    /* ── TAB PILL ─────────────────────────────────── */
+    .tab-wrap {
+      position: relative; display: flex;
+      background: var(--grey-light); border-radius: 50px;
+      padding: 4px; margin-bottom: 32px;
     }
     .tab-pill {
-      position: absolute; top: 4px; height: calc(100% - 8px);
+      position: absolute; top: 4px; bottom: 4px;
       background: var(--purple); border-radius: 50px;
       transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
-      z-index: 0; pointer-events: none;
+      box-shadow: 0 4px 16px rgba(108,99,255,.35);
     }
     .tab-btn {
-      flex: 1; position: relative; z-index: 1; padding: 11px;
-      border: none; background: transparent; border-radius: 50px;
-      font-size: .93rem; font-weight: 700; color: var(--text-light);
-      transition: color .3s;
+      flex: 1; padding: 10px 20px; border: none; background: transparent;
+      font-weight: 700; font-size: .9375rem; border-radius: 50px;
+      position: relative; z-index: 1; transition: color .3s; cursor: pointer;
     }
-    .tab-btn.on { color: #fff; }
+    .tab-btn.active { color: #fff; }
+    .tab-btn:not(.active) { color: var(--text-mid); }
 
-    /* ── FORM PANELS ─────────────────────────────────────── */
-    .fpanel { display: none; }
-    .fpanel.on { display: block; animation: fin .35s ease; }
-    @keyframes fin { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    /* ── PANELS ──────────────────────────────────── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-title { font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+    .panel-sub   { font-size: .9rem; color: var(--text-light); margin-bottom: 28px; font-weight: 600; }
 
-    .form-title { font-size: 1.65rem; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
-    .form-sub   { font-size: .88rem; color: var(--text-light); margin-bottom: 22px; }
-
-    /* ── GOOGLE BTN ──────────────────────────────────────── */
+    /* ── GOOGLE BUTTON ───────────────────────────── */
     .btn-google {
-      width: 100%; display: flex; align-items: center; justify-content: center;
-      gap: 12px; padding: 13px 20px;
-      background: var(--white); border: 1.5px solid var(--grey-mid); border-radius: 14px;
-      font-size: .97rem; font-weight: 700; color: var(--text-dark);
-      transition: box-shadow .2s, transform .15s, border-color .2s;
-      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      width: 100%; padding: 13px 20px;
+      background: #fff; border: 1.5px solid var(--grey-mid);
+      border-radius: 12px; font-weight: 700; font-size: .9375rem; color: var(--text-dark);
+      transition: box-shadow .2s, transform .15s; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
     }
-    .btn-google:hover { box-shadow: 0 6px 22px rgba(108,99,255,.15); transform: scale(1.01); border-color: var(--purple-light); }
+    .btn-google:hover { box-shadow: 0 8px 24px rgba(0,0,0,.10); transform: scale(1.01); }
+    .btn-google:active { transform: scale(.99); }
+    .btn-google:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
-    /* ── SEPARATOR ───────────────────────────────────────── */
+    /* ── SEPARATOR ───────────────────────────────── */
     .sep {
-      display: flex; align-items: center; gap: 12px;
-      margin: 18px 0; color: var(--text-light); font-size: .8rem; font-weight: 600;
+      display: flex; align-items: center; gap: 14px;
+      margin: 20px 0; color: var(--text-light); font-size: .82rem; font-weight: 600;
     }
-    .sep::before, .sep::after { content: ''; flex: 1; height: 1px; background: var(--grey-mid); }
+    .sep::before, .sep::after { content:''; flex:1; height:1px; background:var(--grey-mid); }
 
-    /* ── FLOATING LABELS ─────────────────────────────────── */
-    .fl { position: relative; margin-bottom: 14px; }
-    .fl-in {
+    /* ── FLOATING LABEL INPUTS ───────────────────── */
+    .field { position: relative; margin-bottom: 18px; }
+    .field input {
       width: 100%; padding: 20px 46px 8px 16px;
-      background: var(--grey-light); border: 1.5px solid var(--grey-mid);
-      border-radius: 12px; font-size: 1rem; font-weight: 600; color: var(--text-dark);
-      outline: none; transition: border-color .25s, background .25s;
-      caret-color: var(--purple);
+      border: 1.5px solid var(--grey-mid); border-radius: 12px;
+      font-size: .9375rem; color: var(--text-dark);
+      background: #fff; outline: none;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .fl-in:focus { border-color: var(--purple); background: var(--purple-pale); }
-    .fl-in.err   { border-color: var(--error); }
-    .fl-lb {
+    .field input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(108,99,255,.12); }
+    .field label {
       position: absolute; left: 16px; top: 14px;
-      font-size: 1rem; color: var(--text-light); font-weight: 600;
-      pointer-events: none; transform-origin: left center;
-      transition: transform .25s, color .25s;
+      font-size: .9375rem; color: var(--text-light); font-weight: 600;
+      transition: all .18s; pointer-events: none;
     }
-    .fl-in:focus ~ .fl-lb,
-    .fl-in:not(:placeholder-shown) ~ .fl-lb {
-      transform: translateY(-10px) scale(.72); color: var(--purple);
+    .field input:focus ~ label,
+    .field input:not(:placeholder-shown) ~ label {
+      top: 7px; font-size: .72rem; color: var(--purple);
     }
-    .fl-in.err ~ .fl-lb { color: var(--error); }
-    .fl-ico { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; pointer-events: none; }
-    .fl-eye {
+    .field-icon {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-light); font-size: 1rem; pointer-events: none;
+    }
+    .toggle-pw {
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; font-size: 1rem;
-      color: var(--text-light); padding: 4px; z-index: 2;
-      transition: color .2s;
+      background: none; border: none; color: var(--text-light); font-size: .9rem;
+      cursor: pointer; padding: 4px; line-height: 1;
     }
-    .fl-eye:hover { color: var(--purple); }
-    .ferr {
-      font-size: .75rem; color: var(--error); margin-top: -6px;
-      margin-bottom: 8px; display: none;
-    }
+    .toggle-pw:hover { color: var(--purple); }
 
-    /* ── PASSWORD STRENGTH ───────────────────────────────── */
-    .pw-s { margin-top: -6px; margin-bottom: 12px; }
-    .pw-s-bar { height: 4px; border-radius: 2px; background: var(--grey-mid); overflow: hidden; }
-    .pw-s-fill { height: 100%; border-radius: 2px; width: 0%; transition: width .3s, background .3s; }
-    .pw-s-lbl { font-size: .72rem; font-weight: 700; margin-top: 4px; color: var(--text-light); }
+    /* ── PASSWORD STRENGTH BAR ───────────────────── */
+    .pw-strength { margin-top: -10px; margin-bottom: 16px; }
+    .pw-bar-wrap { height: 5px; background: var(--grey-mid); border-radius: 50px; overflow: hidden; margin-bottom: 5px; }
+    .pw-bar { height: 100%; width: 0%; border-radius: 50px; transition: width .3s, background .3s; }
+    .pw-label { font-size: .76rem; font-weight: 700; }
 
-    /* ── FORM HELPERS ────────────────────────────────────── */
-    .fhelper { display: flex; justify-content: flex-end; margin-top: -6px; margin-bottom: 18px; }
-    .fhelper a { font-size: .8rem; font-weight: 600; color: var(--text-light); }
-    .fhelper a:hover { color: var(--purple); }
-    .fswitch { text-align: center; font-size: .86rem; color: var(--text-light); margin-top: 18px; }
-    .fswitch a { color: var(--purple); font-weight: 700; }
+    /* ── FORGOT LINK ─────────────────────────────── */
+    .forgot-row { text-align: right; margin-top: -10px; margin-bottom: 18px; }
+    .forgot-link { font-size: .84rem; font-weight: 700; color: var(--text-light); }
+    .forgot-link:hover { color: var(--purple); text-decoration: none; }
 
-    /* ── CHECKBOX ────────────────────────────────────────── */
-    .ck-wrap { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
-    .ck-wrap input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--purple); flex-shrink: 0; }
-    .ck-wrap label { font-size: .83rem; color: var(--text-mid); cursor: pointer; line-height: 1.5; }
+    /* ── CGV CHECKBOX ────────────────────────────── */
+    .cgv-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+    .cgv-row input[type="checkbox"] { margin-top: 3px; accent-color: var(--purple); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+    .cgv-row label { font-size: .84rem; color: var(--text-mid); font-weight: 600; cursor: pointer; line-height: 1.5; }
+    .cgv-row label a { font-weight: 800; }
 
-    /* ── BUTTONS ─────────────────────────────────────────── */
+    /* ── CTA BUTTONS ─────────────────────────────── */
     .btn-primary {
-      width: 100%; padding: 14px; border-radius: 50px;
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
       background: var(--purple); color: #fff;
-      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 700;
-      border: none; box-shadow: 0 4px 20px rgba(108,99,255,.35);
-      transition: background .2s, transform .15s, box-shadow .2s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      position: relative; overflow: hidden;
+      font-weight: 800; font-size: 1rem;
+      cursor: pointer; transition: transform .15s, box-shadow .2s, opacity .2s;
+      box-shadow: 0 6px 20px rgba(108,99,255,.35);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
-    .btn-primary:hover { background: var(--purple-dark); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,.45); }
-    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(108,99,255,.45); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .65; transform: none; cursor: not-allowed; }
     .btn-gold {
-      width: 100%; padding: 14px; border-radius: 50px;
-      background: var(--gold); color: var(--night);
-      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800;
-      border: none; box-shadow: 0 4px 20px rgba(255,209,102,.38);
-      transition: background .2s, transform .15s, box-shadow .2s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      position: relative; overflow: hidden;
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: var(--night); font-weight: 800; font-size: 1rem;
+      cursor: pointer; transition: transform .15s, box-shadow .2s, opacity .2s;
+      box-shadow: 0 6px 20px rgba(255,209,102,.4);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
     }
-    .btn-gold:hover { background: var(--gold-dark); transform: translateY(-2px); }
-    .btn-gold:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,209,102,.5); }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-gold:disabled { opacity: .65; transform: none; cursor: not-allowed; }
 
-    .btn-ghost {
-      flex: 1; padding: 13px; border-radius: 50px;
-      background: var(--grey-light); color: var(--text-mid);
-      font-family: 'Nunito', sans-serif; font-size: .93rem; font-weight: 700;
-      border: 1.5px solid var(--grey-mid); transition: background .2s;
+    .spin {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+      animation: spin .7s linear infinite; display: inline-block; flex-shrink: 0;
     }
-    .btn-ghost:hover { background: var(--grey-mid); }
-
-    /* Button spinner */
-    .bspin {
-      width: 17px; height: 17px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
-      animation: spin .7s linear infinite; display: none; flex-shrink: 0;
-    }
-    .bspin.dark { border-color: rgba(26,26,46,.25); border-top-color: var(--night); }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── RIPPLE ──────────────────────────────────────────── */
-    .rip {
-      position: absolute; border-radius: 50%; transform: scale(0);
-      background: rgba(255,255,255,.22); animation: ripa .6s linear; pointer-events: none;
-    }
-    @keyframes ripa { to{transform:scale(4);opacity:0} }
+    /* ── SWITCH LINK ─────────────────────────────── */
+    .switch-row { text-align: center; margin-top: 22px; font-size: .88rem; color: var(--text-light); }
+    .switch-row a { font-weight: 800; color: var(--purple); }
+    .switch-row a:hover { text-decoration: underline; }
 
-    /* ── MODAL ───────────────────────────────────────────── */
-    .mo {
-      display: none; position: fixed; inset: 0;
-      background: rgba(26,26,46,.65); backdrop-filter: blur(8px);
-      z-index: 5000; align-items: center; justify-content: center; padding: 24px;
+    /* ── RESET PASSWORD MODAL ────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(26,26,46,.65); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; visibility: hidden; transition: all .25s;
     }
-    .mo.on { display: flex; }
-    .mo-box {
-      background: #fff; border-radius: 22px; padding: 36px;
-      width: 100%; max-width: 420px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.2);
-      animation: moin .3s ease;
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: #fff; border-radius: 24px; padding: 40px 40px 36px;
+      max-width: 420px; width: 100%;
+      transform: scale(.94) translateY(14px); transition: transform .25s;
+      box-shadow: 0 24px 80px rgba(0,0,0,.18);
     }
-    @keyframes moin { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
-    .mo-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 7px; }
-    .mo-sub   { font-size: .87rem; color: var(--text-light); margin-bottom: 22px; }
-    .mo-acts  { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+    .modal p  { font-size: .9rem; color: var(--text-mid); margin-bottom: 22px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-cancel {
+      flex: 1; padding: 12px; border: 1.5px solid var(--grey-mid); border-radius: 10px;
+      background: transparent; font-weight: 700; font-size: .9rem; color: var(--text-mid); cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--grey-light); }
+    .btn-send {
+      flex: 2; padding: 12px; border: none; border-radius: 10px;
+      background: var(--purple); color: #fff; font-weight: 800; font-size: .9rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-send:hover { opacity: .9; }
+    .btn-send:disabled { opacity: .65; cursor: not-allowed; }
 
-    /* ── RESPONSIVE ──────────────────────────────────────── */
+    /* ── RESPONSIVE ──────────────────────────────── */
     @media (max-width: 768px) {
-      .auth-left { display: none; }
+      .auth-left  { display: none; }
       .auth-right { padding: 24px 16px; }
-      .auth-card { padding: 32px 22px; }
-      .card-logo { display: flex; }
-    }
-    @media (max-width: 375px) {
-      .auth-card { padding: 24px 14px; }
-      .form-title { font-size: 1.4rem; }
+      .auth-card  { padding: 32px 24px; }
+      .card-logo  { display: flex; }
     }
   </style>
 </head>
 <body>
 
-<!-- Toasts -->
+<!-- ── TOASTS ─────────────────────────────────────────── -->
 <div id="tc"></div>
 
-<!-- Modal reset password -->
-<div class="mo" id="mo-reset">
-  <div class="mo-box">
-    <h3 class="mo-title">🔐 Mot de passe oublié ?</h3>
-    <p class="mo-sub">Entre ton adresse email — nous t'envoyons un lien de réinitialisation.</p>
-    <div class="fl">
-      <input type="email" id="reset-email" class="fl-in" placeholder=" ">
-      <label class="fl-lb" for="reset-email">Ton email</label>
-      <span class="fl-ico">📧</span>
+<!-- ── RESET PASSWORD MODAL ───────────────────────────── -->
+<div class="modal-overlay" id="resetModal" onclick="maybeCloseReset(event)">
+  <div class="modal">
+    <h3>🔐 Mot de passe oublié ?</h3>
+    <p>Saisis ton adresse email et nous t'enverrons un lien pour réinitialiser ton mot de passe.</p>
+    <div class="field">
+      <input type="email" id="resetEmail" placeholder=" " autocomplete="email" />
+      <label>Adresse email</label>
+      <span class="field-icon">📧</span>
     </div>
-    <div class="mo-acts">
-      <button class="btn-ghost" onclick="closeMo('mo-reset')">Annuler</button>
-      <button class="btn-primary" id="reset-btn" onclick="handleReset()" style="flex:1">
-        <div class="bspin" id="reset-spin"></div>
-        <span id="reset-lbl">Envoyer</span>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeReset()">Annuler</button>
+      <button class="btn-send" id="resetBtn" onclick="doReset()">
+        <span id="resetBtnText">Envoyer le lien</span>
       </button>
     </div>
   </div>
 </div>
 
-<!-- LAYOUT -->
+<!-- ── MAIN LAYOUT ─────────────────────────────────────── -->
 <div class="auth-layout">
 
-  <!-- ══ GAUCHE ══ -->
+  <!-- ── LEFT PANEL ─────────────────────────────────── -->
   <div class="auth-left">
-    <div id="stars"></div>
+    <canvas id="starsCanvas"></canvas>
+
+    <!-- Big decorative rotating star (background) -->
+    <div class="deco-star">
+      <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="100,5 120,72 190,72 135,112 156,180 100,140 44,180 65,112 10,72 80,72" fill="white"/>
+      </svg>
+    </div>
+
     <div class="left-inner">
-      <div class="left-logo">
-        <img src="logo.png" height="44" alt="">
-        <span>Tiny<span class="acc">Tale</span></span>
+      <a class="left-logo" href="index.html">
+        <div class="left-logo-icon">T</div>
+        <div class="left-logo-text">Tiny<span>Tale</span></div>
+      </a>
+      <div class="left-tagline">
+        Des histoires magiques<br>créées <em>rien que pour</em><br>votre enfant ✨
       </div>
-      <h1 class="left-tagline">Des histoires magiques<br>créés rien que pour<br>votre enfant</h1>
       <ul class="left-bullets">
-        <li><span class="bullet-ico">⭐</span>Retrouve toutes tes histoires</li>
-        <li><span class="bullet-ico">🎙️</span>Écoute à tout moment</li>
-        <li><span class="bullet-ico">📖</span>Crée de nouvelles aventures</li>
+        <li><div class="bullet-icon">⭐</div>Retrouve toutes tes histoires</li>
+        <li><div class="bullet-icon">🎙️</div>Écoute à tout moment</li>
+        <li><div class="bullet-icon">📖</div>Crée de nouvelles aventures</li>
       </ul>
     </div>
-    <div class="star-deco" aria-hidden="true">✦</div>
   </div>
 
-  <!-- ══ DROITE ══ -->
+  <!-- ── RIGHT PANEL ─────────────────────────────────── -->
   <div class="auth-right">
     <div class="auth-card">
 
-      <!-- Logo mobile -->
-      <div class="card-logo">
-        <img src="logo.png" height="40" alt="">
-        <span>Tiny<span class="acc">Tale</span></span>
+      <!-- Mobile-only logo -->
+      <a class="card-logo" href="index.html">
+        <div class="card-logo-icon">T</div>
+        <div class="card-logo-text">Tiny<span>Tale</span></div>
+      </a>
+
+      <!-- Tab pill toggle -->
+      <div class="tab-wrap" id="tabWrap">
+        <div class="tab-pill" id="tabPill"></div>
+        <button class="tab-btn active" id="tabLogin"  onclick="switchTab('login')">Connexion</button>
+        <button class="tab-btn"        id="tabSignup" onclick="switchTab('signup')">Inscription</button>
       </div>
 
-      <!-- Tabs -->
-      <div class="tab-bar" id="tabbar">
-        <div class="tab-pill" id="pill"></div>
-        <button class="tab-btn on" id="tb-login" onclick="switchTab('login')">Connexion</button>
-        <button class="tab-btn"    id="tb-signup" onclick="switchTab('signup')">Inscription</button>
-      </div>
+      <!-- ═══ CONNEXION PANEL ═══ -->
+      <div class="panel active" id="panelLogin">
+        <div class="panel-title">Bon retour ! 👋</div>
+        <div class="panel-sub">Retrouve tes histoires magiques</div>
 
-      <!-- ─── CONNEXION ─── -->
-      <div class="fpanel on" id="p-login">
-        <h2 class="form-title">Bon retour ! 👋</h2>
-        <p class="form-sub">Retrouve tes histoires magiques</p>
-
-        <button class="btn-google" id="gg-login" onclick="doGoogle()">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
+        <button class="btn-google" id="googleLoginBtn" onclick="signInWithGoogle('login')">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Continuer avec Google
         </button>
 
-        <div class="sep"><span>ou</span></div>
+        <div class="sep">ou</div>
 
-        <div class="fl">
-          <input type="email" id="l-email" class="fl-in" placeholder=" " autocomplete="email">
-          <label class="fl-lb" for="l-email">Email</label>
-          <span class="fl-ico">📧</span>
+        <div class="field">
+          <input type="email" id="loginEmail" placeholder=" " autocomplete="email" />
+          <label>Email</label>
+          <span class="field-icon">📧</span>
         </div>
-        <div class="ferr" id="l-email-e"></div>
-
-        <div class="fl">
-          <input type="password" id="l-pw" class="fl-in" placeholder=" " autocomplete="current-password">
-          <label class="fl-lb" for="l-pw">Mot de passe</label>
-          <button type="button" class="fl-eye" onclick="toggleEye('l-pw',this)" aria-label="Voir mot de passe">👁</button>
+        <div class="field">
+          <input type="password" id="loginPw" placeholder=" " autocomplete="current-password" />
+          <label>Mot de passe</label>
+          <button type="button" class="toggle-pw" onclick="togglePw('loginPw',this)">👁</button>
         </div>
-        <div class="ferr" id="l-pw-e"></div>
-
-        <div class="fhelper">
-          <a onclick="openMo('mo-reset')">Mot de passe oublié ?</a>
+        <div class="forgot-row">
+          <a class="forgot-link" onclick="openReset()">Mot de passe oublié ?</a>
         </div>
 
-        <button class="btn-primary" id="l-btn" onclick="doLogin(event)">
-          <div class="bspin" id="l-spin"></div>
-          <span id="l-lbl">Se connecter</span>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+          <span id="loginBtnText">Se connecter</span>
         </button>
-
-        <p class="fswitch">Pas encore de compte ? <a onclick="switchTab('signup')">Créer un compte →</a></p>
+        <div class="switch-row">Pas encore de compte ? <a onclick="switchTab('signup')">Créer un compte →</a></div>
       </div>
 
-      <!-- ─── INSCRIPTION ─── -->
-      <div class="fpanel" id="p-signup">
-        <h2 class="form-title">Créer mon compte ✨</h2>
-        <p class="form-sub">Rejoins +500 familles TinyTale</p>
+      <!-- ═══ INSCRIPTION PANEL ═══ -->
+      <div class="panel" id="panelSignup">
+        <div class="panel-title">Créer mon compte ✨</div>
+        <div class="panel-sub">Rejoins +500 familles TinyTale</div>
 
-        <button class="btn-google" id="gg-signup" onclick="doGoogle()">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
+        <button class="btn-google" id="googleSignupBtn" onclick="signInWithGoogle('signup')">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
           Continuer avec Google
         </button>
 
-        <div class="sep"><span>ou</span></div>
+        <div class="sep">ou</div>
 
-        <div class="fl">
-          <input type="text" id="s-prenom" class="fl-in" placeholder=" " autocomplete="given-name">
-          <label class="fl-lb" for="s-prenom">Prénom</label>
-          <span class="fl-ico">👤</span>
+        <div class="field">
+          <input type="text" id="signupPrenom" placeholder=" " autocomplete="given-name" />
+          <label>Prénom</label>
+          <span class="field-icon">👤</span>
         </div>
-        <div class="ferr" id="s-prenom-e"></div>
+        <div class="field">
+          <input type="email" id="signupEmail" placeholder=" " autocomplete="email" />
+          <label>Email</label>
+          <span class="field-icon">📧</span>
+        </div>
+        <div class="field">
+          <input type="password" id="signupPw" placeholder=" " autocomplete="new-password" oninput="checkPwStrength(this.value)" />
+          <label>Mot de passe</label>
+          <button type="button" class="toggle-pw" onclick="togglePw('signupPw',this)">👁</button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-bar-wrap"><div class="pw-bar" id="pwBar"></div></div>
+          <div class="pw-label" id="pwLabel" style="color:var(--text-light)">Saisis un mot de passe</div>
+        </div>
+        <div class="field">
+          <input type="password" id="signupPwConf" placeholder=" " autocomplete="new-password" />
+          <label>Confirmer le mot de passe</label>
+          <button type="button" class="toggle-pw" onclick="togglePw('signupPwConf',this)">👁</button>
+        </div>
+        <div class="cgv-row">
+          <input type="checkbox" id="cgvCheck" />
+          <label for="cgvCheck">J'accepte les <a href="#">CGV</a> et la <a href="#">politique de confidentialité</a></label>
+        </div>
 
-        <div class="fl">
-          <input type="email" id="s-email" class="fl-in" placeholder=" " autocomplete="email">
-          <label class="fl-lb" for="s-email">Email</label>
-          <span class="fl-ico">📧</span>
-        </div>
-        <div class="ferr" id="s-email-e"></div>
-
-        <div class="fl">
-          <input type="password" id="s-pw" class="fl-in" placeholder=" " autocomplete="new-password" oninput="pwStrength(this.value)">
-          <label class="fl-lb" for="s-pw">Mot de passe</label>
-          <button type="button" class="fl-eye" onclick="toggleEye('s-pw',this)" aria-label="Voir mot de passe">👁</button>
-        </div>
-        <div class="pw-s">
-          <div class="pw-s-bar"><div class="pw-s-fill" id="pw-fill"></div></div>
-          <p class="pw-s-lbl" id="pw-lbl"></p>
-        </div>
-        <div class="ferr" id="s-pw-e"></div>
-
-        <div class="fl">
-          <input type="password" id="s-conf" class="fl-in" placeholder=" " autocomplete="new-password">
-          <label class="fl-lb" for="s-conf">Confirmer le mot de passe</label>
-          <button type="button" class="fl-eye" onclick="toggleEye('s-conf',this)" aria-label="Voir mot de passe">👁</button>
-        </div>
-        <div class="ferr" id="s-conf-e"></div>
-
-        <div class="ck-wrap">
-          <input type="checkbox" id="ck-cgv">
-          <label for="ck-cgv">J'accepte les <a href="#">CGV</a> et la <a href="#">politique de confidentialité</a></label>
-        </div>
-        <div class="ferr" id="s-cgv-e"></div>
-
-        <button class="btn-gold" id="s-btn" onclick="doSignup(event)">
-          <div class="bspin dark" id="s-spin"></div>
-          <span id="s-lbl">Créer mon compte</span>
+        <button class="btn-gold" id="signupBtn" onclick="doSignup()">
+          <span id="signupBtnText">Créer mon compte</span>
         </button>
-
-        <p class="fswitch">Déjà un compte ? <a onclick="switchTab('login')">Se connecter →</a></p>
+        <div class="switch-row">Déjà un compte ? <a onclick="switchTab('login')">Se connecter →</a></div>
       </div>
 
     </div>
@@ -472,259 +463,288 @@
 </div>
 
 <script>
-/* ─── FIREBASE INIT ─────────────────────────────────────── */
+/* ── FIREBASE INIT ──────────────────────────────────────────── */
 let auth, db;
 try {
-  const fbCfg = TINYTALE_CONFIG.FIREBASE;
-  const app = firebase.apps.length
-    ? firebase.app()
-    : firebase.initializeApp({
-        apiKey:            fbCfg.API_KEY,
-        authDomain:        fbCfg.AUTH_DOMAIN,
-        projectId:         fbCfg.PROJECT_ID,
-        storageBucket:     fbCfg.STORAGE_BUCKET,
-        messagingSenderId: fbCfg.MESSAGING_SENDER_ID,
-        appId:             fbCfg.APP_ID,
-      });
+  const cfg = TINYTALE_CONFIG.FIREBASE;
+  const firebaseConfig = {
+    apiKey:            cfg.API_KEY,
+    authDomain:        cfg.AUTH_DOMAIN,
+    projectId:         cfg.PROJECT_ID,
+    storageBucket:     cfg.STORAGE_BUCKET,
+    messagingSenderId: cfg.MESSAGING_SENDER_ID,
+    appId:             cfg.APP_ID,
+  };
+  const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
   auth = firebase.auth();
   db   = firebase.firestore();
-} catch (e) {
+} catch(e) {
   console.warn('Firebase non configuré :', e.message);
 }
 
-/* Redirection si déjà connecté */
+/* ── REDIRECT SI DÉJÀ CONNECTÉ ─────────────────────────────── */
 if (auth) {
   auth.onAuthStateChanged(user => {
     if (user) window.location.href = 'library.html';
   });
 }
 
-/* ─── ÉTOILES ───────────────────────────────────────────── */
-const sc = document.getElementById('stars');
-for (let i = 0; i < 65; i++) {
-  const s = document.createElement('div'); s.className = 'star';
-  const sz = Math.random() * 2.4 + 0.4;
-  s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${1.8+Math.random()*3}s`;
-  sc.appendChild(s);
+/* ── ANIMATED STARFIELD ─────────────────────────────────────── */
+(function initStars() {
+  const canvas = document.getElementById('starsCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize() {
+    canvas.width  = canvas.parentElement.offsetWidth;
+    canvas.height = canvas.parentElement.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  const stars = Array.from({length: 80}, () => ({
+    x: Math.random(), y: Math.random(),
+    r: Math.random() * 1.5 + 0.4,
+    a: Math.random(),
+    da: (Math.random() - .5) * .015,
+  }));
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.da;
+      if (s.a < .05 || s.a > 1) s.da *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${s.a.toFixed(2)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── TAB PILL ────────────────────────────────────────────────── */
+let currentTab = 'login';
+
+function movePill(btnEl) {
+  const wrap = document.getElementById('tabWrap');
+  const pill = document.getElementById('tabPill');
+  const wr = wrap.getBoundingClientRect();
+  const br = btnEl.getBoundingClientRect();
+  pill.style.left  = (br.left - wr.left) + 'px';
+  pill.style.width = br.width + 'px';
 }
 
-/* ─── TOAST ─────────────────────────────────────────────── */
-function toast(type, msg, ms = 4000) {
-  const t = document.createElement('div'); t.className = `toast ${type}`;
-  const ico = { success:'✅', error:'❌', info:'📧' };
-  t.textContent = (ico[type]||'') + ' ' + msg;
-  document.getElementById('tc').appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 310); }, ms);
-}
-
-/* ─── TAB SWITCH ────────────────────────────────────────── */
 function switchTab(tab) {
-  const tbl = document.getElementById('tb-login');
-  const tbs = document.getElementById('tb-signup');
-  const pl  = document.getElementById('p-login');
-  const ps  = document.getElementById('p-signup');
-  const pil = document.getElementById('pill');
-
-  /* Position pill over the active button */
-  const activeBtn = tab === 'login' ? tbl : tbs;
-  pil.style.left  = activeBtn.offsetLeft + 'px';
-  pil.style.width = activeBtn.offsetWidth + 'px';
-
-  tbl.classList.toggle('on', tab === 'login');
-  tbs.classList.toggle('on', tab === 'signup');
-  pl.classList.toggle('on', tab === 'login');
-  ps.classList.toggle('on', tab === 'signup');
-
-  clearErrors();
+  currentTab = tab;
+  document.getElementById('panelLogin').classList.toggle('active',  tab === 'login');
+  document.getElementById('panelSignup').classList.toggle('active', tab === 'signup');
+  document.getElementById('tabLogin').classList.toggle('active',    tab === 'login');
+  document.getElementById('tabSignup').classList.toggle('active',   tab === 'signup');
+  movePill(tab === 'login' ? document.getElementById('tabLogin') : document.getElementById('tabSignup'));
 }
 
-/* Init pill position */
-window.addEventListener('load', () => {
-  const btn = document.getElementById('tb-login');
-  const pil = document.getElementById('pill');
-  pil.style.left  = btn.offsetLeft + 'px';
-  pil.style.width = btn.offsetWidth + 'px';
+window.addEventListener('load',   () => movePill(document.getElementById('tabLogin')));
+window.addEventListener('resize', () => {
+  movePill(currentTab === 'login' ? document.getElementById('tabLogin') : document.getElementById('tabSignup'));
 });
 
-/* ─── BUTTON LOADER ─────────────────────────────────────── */
-function setBtn(id, spinId, lblId, loading, txt = '') {
-  const btn = document.getElementById(id);
-  const sp  = document.getElementById(spinId);
-  const lb  = document.getElementById(lblId);
-  btn.disabled = loading;
-  sp.style.display = loading ? 'block' : 'none';
-  if (txt) lb.textContent = txt;
-}
-
-/* ─── EYE TOGGLE ────────────────────────────────────────── */
-function toggleEye(id, btn) {
+/* ── TOGGLE PASSWORD ─────────────────────────────────────────── */
+function togglePw(id, btn) {
   const el = document.getElementById(id);
-  const show = el.type === 'password';
-  el.type = show ? 'text' : 'password';
-  btn.textContent = show ? '🙈' : '👁';
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
 }
 
-/* ─── PASSWORD STRENGTH ─────────────────────────────────── */
-function pwStrength(v) {
-  let s = 0;
-  if (v.length >= 6) s++;
-  if (v.length >= 10) s++;
-  if (/[A-Z]/.test(v)) s++;
-  if (/\d/.test(v)) s++;
-  if (/[^A-Za-z0-9]/.test(v)) s++;
-  const lvl = [
-    {w:'0%',  c:'',           t:''},
-    {w:'20%', c:'#EF4444',    t:'🔴 Trop court'},
-    {w:'45%', c:'#F97316',    t:'🟠 Faible'},
-    {w:'65%', c:'#EAB308',    t:'🟡 Moyen'},
-    {w:'85%', c:'#22C55E',    t:'🟢 Fort'},
-    {w:'100%',c:'#16A34A',    t:'🟢 Très fort'},
-  ][s] || {w:'0%',c:'',t:''};
-  const f = document.getElementById('pw-fill');
-  const l = document.getElementById('pw-lbl');
-  f.style.width = v ? lvl.w : '0%';
-  f.style.background = lvl.c;
-  l.textContent = v ? lvl.t : '';
-  l.style.color = lvl.c;
+/* ── PASSWORD STRENGTH ───────────────────────────────────────── */
+function checkPwStrength(val) {
+  const bar = document.getElementById('pwBar');
+  const lbl = document.getElementById('pwLabel');
+  if (!val) {
+    bar.style.width = '0'; lbl.textContent = 'Saisis un mot de passe'; lbl.style.color = 'var(--text-light)';
+    return;
+  }
+  let score = 0;
+  if (val.length >= 8)         score++;
+  if (/[A-Z]/.test(val))       score++;
+  if (/[0-9]/.test(val))       score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { color:'#EF4444', label:'Très faible', w:'15%' },
+    { color:'#F97316', label:'Faible',      w:'35%' },
+    { color:'#EAB308', label:'Moyen',       w:'60%' },
+    { color:'#84CC16', label:'Fort',        w:'80%' },
+    { color:'#22C55E', label:'Très fort',   w:'100%'},
+  ];
+  const lvl = levels[score] || levels[0];
+  bar.style.width = lvl.w;
+  bar.style.background = lvl.color;
+  lbl.textContent = lvl.label;
+  lbl.style.color = lvl.color;
 }
 
-/* ─── VALIDATION HELPERS ────────────────────────────────── */
-function showErr(id, msg) {
-  const e = document.getElementById(id);
-  if (e) { e.textContent = msg; e.style.display = 'block'; }
-}
-function clearErrors() {
-  document.querySelectorAll('.ferr').forEach(e => { e.style.display = 'none'; e.textContent = ''; });
-  document.querySelectorAll('.fl-in').forEach(i => i.classList.remove('err'));
-}
-
-/* ─── GOOGLE AUTH ───────────────────────────────────────── */
-async function doGoogle() {
-  if (!auth) { toast('error', 'Firebase non configuré'); return; }
+/* ── GOOGLE SIGN IN ──────────────────────────────────────────── */
+async function signInWithGoogle(context) {
+  if (!auth) { showToast('error', 'Firebase non configuré'); return; }
+  const btnId = context === 'login' ? 'googleLoginBtn' : 'googleSignupBtn';
+  setBtnLoading(btnId, true, 'google');
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
     const result = await auth.signInWithPopup(provider);
-    await ensureProfile(result.user);
-    toast('success', `Bienvenue ${result.user.displayName || ''} ! 🎉`);
-    setTimeout(() => window.location.href = 'library.html', 1400);
-  } catch (e) {
-    if (e.code !== 'auth/popup-closed-by-user') toast('error', fireMsg(e.code));
+    await createUserProfileIfNew(result.user);
+    showToast('success', `Bienvenue ${result.user.displayName} ! 🎉`);
+    setTimeout(() => window.location.href = 'library.html', 1500);
+  } catch(e) {
+    showToast('error', getErrorMessage(e.code));
+    setBtnLoading(btnId, false, 'google');
   }
 }
 
-/* ─── EMAIL LOGIN ───────────────────────────────────────── */
-async function doLogin(e) {
-  e.preventDefault(); clearErrors();
-  const email = document.getElementById('l-email').value.trim();
-  const pw    = document.getElementById('l-pw').value;
-  if (!email) { showErr('l-email-e', 'Email requis'); return; }
-  if (!pw)    { showErr('l-pw-e', 'Mot de passe requis'); return; }
-  if (!auth)  { toast('error', 'Firebase non configuré'); return; }
-
-  setBtn('l-btn','l-spin','l-lbl', true, 'Connexion…');
+/* ── EMAIL LOGIN ─────────────────────────────────────────────── */
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  if (!email || !pw) { showToast('error', 'Remplis tous les champs'); return; }
+  if (!auth) { showToast('error', 'Firebase non configuré'); return; }
+  setBtnLoading('loginBtn', true);
   try {
     await auth.signInWithEmailAndPassword(email, pw);
-    toast('success', 'Connexion réussie ! Redirection…');
-    setTimeout(() => window.location.href = 'library.html', 1400);
-  } catch (err) {
-    toast('error', fireMsg(err.code));
-    setBtn('l-btn','l-spin','l-lbl', false, 'Se connecter');
+    showToast('success', 'Connexion réussie ! Redirection…');
+    setTimeout(() => window.location.href = 'library.html', 1500);
+  } catch(e) {
+    showToast('error', getErrorMessage(e.code));
+    setBtnLoading('loginBtn', false);
   }
 }
 
-/* ─── EMAIL SIGNUP ──────────────────────────────────────── */
-async function doSignup(e) {
-  e.preventDefault(); clearErrors();
-  const prenom = document.getElementById('s-prenom').value.trim();
-  const email  = document.getElementById('s-email').value.trim();
-  const pw     = document.getElementById('s-pw').value;
-  const conf   = document.getElementById('s-conf').value;
-  const cgv    = document.getElementById('ck-cgv').checked;
-
-  let ok = true;
-  if (!prenom)       { showErr('s-prenom-e', 'Prénom requis'); ok = false; }
-  if (!email)        { showErr('s-email-e', 'Email requis'); ok = false; }
-  if (pw.length < 6) { showErr('s-pw-e', 'Minimum 6 caractères'); ok = false; }
-  if (pw !== conf)   { showErr('s-conf-e', 'Les mots de passe ne correspondent pas'); ok = false; }
-  if (!cgv)          { showErr('s-cgv-e', 'Accepte les CGV pour continuer'); ok = false; }
-  if (!ok || !auth)  { if (!auth) toast('error', 'Firebase non configuré'); return; }
-
-  setBtn('s-btn','s-spin','s-lbl', true, 'Création…');
+/* ── EMAIL SIGNUP ────────────────────────────────────────────── */
+async function doSignup() {
+  const prenom = document.getElementById('signupPrenom').value.trim();
+  const email  = document.getElementById('signupEmail').value.trim();
+  const pw     = document.getElementById('signupPw').value;
+  const pwConf = document.getElementById('signupPwConf').value;
+  const cgv    = document.getElementById('cgvCheck').checked;
+  if (!prenom || !email || !pw || !pwConf) { showToast('error', 'Remplis tous les champs'); return; }
+  if (pw !== pwConf)  { showToast('error', 'Les mots de passe ne correspondent pas'); return; }
+  if (pw.length < 6)  { showToast('error', 'Mot de passe trop court (6 car. min)'); return; }
+  if (!cgv)           { showToast('error', 'Accepte les CGV pour continuer'); return; }
+  if (!auth)          { showToast('error', 'Firebase non configuré'); return; }
+  setBtnLoading('signupBtn', true);
   try {
-    const r = await auth.createUserWithEmailAndPassword(email, pw);
-    await r.user.updateProfile({ displayName: prenom });
-    await ensureProfile(r.user, prenom);
-    toast('success', `Bienvenue ${prenom} ! ✨`);
-    setTimeout(() => window.location.href = 'library.html', 1400);
-  } catch (err) {
-    toast('error', fireMsg(err.code));
-    setBtn('s-btn','s-spin','s-lbl', false, 'Créer mon compte');
+    const result = await auth.createUserWithEmailAndPassword(email, pw);
+    await result.user.updateProfile({ displayName: prenom });
+    await createUserProfileIfNew(result.user, prenom);
+    showToast('success', `Bienvenue ${prenom} ! ✨`);
+    setTimeout(() => window.location.href = 'library.html', 1500);
+  } catch(e) {
+    showToast('error', getErrorMessage(e.code));
+    setBtnLoading('signupBtn', false);
   }
 }
 
-/* ─── FIRESTORE — PROFIL ────────────────────────────────── */
-async function ensureProfile(user, prenom = null) {
+/* ── CREATE FIRESTORE PROFILE ────────────────────────────────── */
+async function createUserProfileIfNew(user, prenom = null) {
   if (!db) return;
-  const ref = db.collection('users').doc(user.uid);
-  const doc = await ref.get();
-  if (!doc.exists) {
-    await ref.set({
-      uid:    user.uid,
-      prenom: prenom || user.displayName || 'Utilisateur',
-      email:  user.email,
-      photoURL: user.photoURL || null,
-      plan:   'gratuit',
-      histoiresRestantes: 1,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-  }
+  try {
+    const ref = db.collection('users').doc(user.uid);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      await ref.set({
+        uid:                user.uid,
+        prenom:             prenom || user.displayName || 'Utilisateur',
+        email:              user.email,
+        photoURL:           user.photoURL || null,
+        plan:               'gratuit',
+        histoiresRestantes: 1,
+        createdAt:          firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+  } catch(e) { console.warn('createProfile:', e.message); }
 }
 
-/* ─── RESET PASSWORD ────────────────────────────────────── */
-async function handleReset() {
-  const email = document.getElementById('reset-email').value.trim();
-  if (!email) { toast('error', 'Entrez votre email'); return; }
-  if (!auth)  { toast('error', 'Firebase non configuré'); return; }
-  setBtn('reset-btn','reset-spin','reset-lbl', true, 'Envoi…');
+/* ── RESET PASSWORD MODAL ────────────────────────────────────── */
+function openReset() {
+  document.getElementById('resetEmail').value = document.getElementById('loginEmail').value;
+  document.getElementById('resetModal').classList.add('open');
+}
+function closeReset() { document.getElementById('resetModal').classList.remove('open'); }
+function maybeCloseReset(e) { if (e.target === document.getElementById('resetModal')) closeReset(); }
+
+async function doReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  if (!email) { showToast('error', 'Saisis ton email'); return; }
+  if (!auth)  { showToast('error', 'Firebase non configuré'); return; }
+  const btn = document.getElementById('resetBtn');
+  const txt = document.getElementById('resetBtnText');
+  btn.disabled = true; txt.textContent = 'Envoi…';
   try {
     await auth.sendPasswordResetEmail(email);
-    toast('info', 'Email de réinitialisation envoyé !');
-    closeMo('mo-reset');
-  } catch (err) {
-    toast('error', fireMsg(err.code));
-  } finally {
-    setBtn('reset-btn','reset-spin','reset-lbl', false, 'Envoyer');
+    closeReset();
+    showToast('info', '📧 Email de réinitialisation envoyé !');
+  } catch(e) {
+    showToast('error', getErrorMessage(e.code));
+  }
+  btn.disabled = false; txt.textContent = 'Envoyer le lien';
+}
+
+/* ── BUTTON LOADING ──────────────────────────────────────────── */
+const GOOGLE_SVG = `<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+
+function setBtnLoading(btnId, on, type) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = on;
+  if (type === 'google') {
+    btn.innerHTML = on
+      ? `<span class="spin" style="border-color:rgba(108,99,255,.2);border-top-color:var(--purple)"></span>Connexion…`
+      : `${GOOGLE_SVG}Continuer avec Google`;
+    return;
+  }
+  const isGold = btn.classList.contains('btn-gold');
+  const textId = btnId.replace('Btn','BtnText');
+  const span = document.getElementById(textId);
+  if (on) {
+    if (span) span.textContent = isGold ? 'Création…' : 'Connexion en cours…';
+    if (!btn.querySelector('.spin')) {
+      const sp = document.createElement('span');
+      sp.className = 'spin';
+      if (isGold) sp.style.cssText = 'border-color:rgba(26,26,46,.2);border-top-color:var(--night)';
+      btn.insertAdjacentElement('afterbegin', sp);
+    }
+  } else {
+    if (span) span.textContent = isGold ? 'Créer mon compte' : 'Se connecter';
+    btn.querySelector('.spin')?.remove();
   }
 }
 
-/* ─── MODAL HELPERS ─────────────────────────────────────── */
-function openMo(id)  { document.getElementById(id).classList.add('on'); }
-function closeMo(id) { document.getElementById(id).classList.remove('on'); document.getElementById('reset-email').value = ''; }
-document.getElementById('mo-reset').addEventListener('click', e => { if (e.target === e.currentTarget) closeMo('mo-reset'); });
-
-/* ─── FIREBASE ERROR MESSAGES ───────────────────────────── */
-function fireMsg(code) {
-  return ({
+/* ── ERROR MESSAGES FR ───────────────────────────────────────── */
+function getErrorMessage(code) {
+  const m = {
     'auth/user-not-found':         'Aucun compte avec cet email',
     'auth/wrong-password':         'Mot de passe incorrect',
-    'auth/invalid-credential':     'Email ou mot de passe incorrect',
     'auth/email-already-in-use':   'Cet email est déjà utilisé',
     'auth/weak-password':          'Mot de passe trop faible (6 car. min)',
-    'auth/invalid-email':          'Email invalide',
+    'auth/invalid-email':          'Adresse email invalide',
     'auth/popup-closed-by-user':   'Connexion annulée',
-    'auth/too-many-requests':      'Trop de tentatives. Réessaie dans 1 minute.',
-    'auth/network-request-failed': 'Problème de connexion réseau',
-  })[code] || 'Une erreur est survenue. Réessaie.';
+    'auth/too-many-requests':      'Trop de tentatives, réessaie dans 1 minute',
+    'auth/invalid-credential':     'Email ou mot de passe incorrect',
+    'auth/network-request-failed': 'Erreur réseau, vérifie ta connexion',
+  };
+  return m[code] || 'Une erreur est survenue. Réessaie.';
 }
 
-/* ─── RIPPLE ────────────────────────────────────────────── */
-document.querySelectorAll('.btn-primary,.btn-gold,.btn-google').forEach(btn => {
-  btn.addEventListener('click', ev => {
-    const r = document.createElement('span'); r.className = 'rip';
-    const rc = btn.getBoundingClientRect(), sz = Math.max(rc.width, rc.height) * 2;
-    r.style.cssText = `width:${sz}px;height:${sz}px;left:${ev.clientX-rc.left-sz/2}px;top:${ev.clientY-rc.top-sz/2}px`;
-    btn.appendChild(r); r.addEventListener('animationend', () => r.remove());
-  });
+/* ── TOAST ───────────────────────────────────────────────────── */
+function showToast(type, msg) {
+  const icons = { success:'✅', error:'❌', info:'📧' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(() => el.remove(), 400); }, 3500);
+}
+
+/* ── ENTER KEY ───────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (currentTab === 'login')  doLogin();
+  if (currentTab === 'signup') doSignup();
 });
 </script>
 </body>
