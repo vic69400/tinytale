@@ -1328,11 +1328,11 @@ async function genererHistoire() {
   ──────────────────────────────────────────────────────*/
   animateGenSteps();
 
-  localStorage.setItem('tt_prenom', state.prenom);
-  localStorage.setItem('tt_theme',  state.theme);
-  localStorage.setItem('tt_age',    state.age);
-  localStorage.setItem('tt_valeur', state.valeur);
-  localStorage.setItem('tt_duree',  state.duree);
+  localStorage.setItem('tinytale_prenom', state.prenom);
+  localStorage.setItem('tinytale_theme',  state.theme);
+  localStorage.setItem('tinytale_age',    state.age);
+  localStorage.setItem('tinytale_valeur', state.valeur);
+  localStorage.setItem('tinytale_duree',  state.duree);
 
   await sleep(3200); // Simule le temps de génération API
 

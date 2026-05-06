@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Démo histoire – TinyTale</title>
+  <script src="config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & VARIABLES ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --v: #6C63FF; --o: #FFD166; --n: #1A1A2E;
+      --vl: rgba(108,99,255,.13); --vm: rgba(108,99,255,.28);
+      --ol: rgba(255,209,102,.13);
+      --txt: #E8E8F0; --muted: rgba(232,232,240,.6);
+      --card: rgba(255,255,255,.04); --cb: rgba(108,99,255,.22);
+      --r: 20px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--n); color: var(--txt);
+      overflow-x: hidden; cursor: none;
+    }
+    h1,h2,h3,h4 { font-family: 'Baloo 2', cursive; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    @media (hover:none) { body { cursor: auto; } }
+
+    /* ── SCROLL PROGRESS ──────────────────────────────────── */
+    #sp {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      z-index: 10001; pointer-events: none;
+    }
+
+    /* ── CURSOR ───────────────────────────────────────────── */
+    #cd, #cr {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; transform: translate(-50%,-50%);
+    }
+    #cd { width:8px; height:8px; background:var(--v); z-index:10001; transition:background .2s,transform .15s; }
+    #cr { width:40px; height:40px; border:2px solid rgba(108,99,255,.55); z-index:10000; transition:width .3s,height .3s,border-color .3s; }
+    body.ch #cd { background:var(--o); transform:translate(-50%,-50%) scale(1.5); }
+    body.ch #cr { width:56px; height:56px; border-color:rgba(255,209,102,.45); }
+    @media (hover:none) { #cd,#cr { display:none; } }
+
+    /* ── NAVBAR ───────────────────────────────────────────── */
+    #nav {
+      position: fixed; top:0; left:0; right:0; z-index:1000;
+      padding:18px 48px;
+      display:flex; align-items:center; justify-content:space-between;
+      transition: all .4s;
+    }
+    #nav.scrolled {
+      padding:11px 48px;
+      background:rgba(26,26,46,.84); backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--cb);
+      box-shadow:0 8px 32px rgba(0,0,0,.2);
+    }
+    .nav-logo { display:flex; align-items:center; gap:10px; font-family:'Baloo 2',cursive; font-size:1.45rem; font-weight:800; }
+    .nav-logo .vt { color:var(--v); }
+    .nav-links { display:flex; align-items:center; gap:28px; list-style:none; }
+    .nav-links a { font-weight:600; font-size:.9rem; color:var(--muted); transition:color .2s; }
+    .nav-links a:hover { color:var(--txt); }
+    .nav-cta { background:var(--v)!important; color:#fff!important; padding:9px 22px; border-radius:50px; transition:background .2s,transform .2s!important; }
+    .nav-cta:hover { background:#5548e0!important; transform:translateY(-2px); }
+    #burger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:8px; }
+    #burger span { display:block; width:24px; height:2px; background:var(--txt); border-radius:2px; transition:all .3s; }
+    #burger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    #burger.open span:nth-child(2) { opacity:0; }
+    #burger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    #mmenu {
+      display:none; position:fixed; inset:0; z-index:999;
+      background:rgba(26,26,46,.97); backdrop-filter:blur(20px);
+      flex-direction:column; align-items:center; justify-content:center; gap:30px;
+    }
+    #mmenu.open { display:flex; }
+    #mmenu a { font-family:'Baloo 2',cursive; font-size:1.8rem; font-weight:700; transition:color .2s; }
+    #mmenu a:hover { color:var(--v); }
+
+    /* ── REVEAL ───────────────────────────────────────────── */
+    .reveal { opacity:0; transform:translateY(36px); transition:opacity .7s ease, transform .7s ease; }
+    .reveal.in { opacity:1; transform:none; }
+
+    /* ══════════════════════════════════════════════════════
+       1. HERO
+    ═════════════════════════════════════════════════════════ */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; text-align: center; padding: 100px 24px 80px;
+    }
+    #hcvs { position:absolute; inset:0; z-index:0; }
+
+    .hero-in {
+      position: relative; z-index: 1;
+      max-width: 820px; width: 100%;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,209,102,.12); border:1px solid rgba(255,209,102,.35);
+      color: var(--o); padding: 9px 22px; border-radius: 50px;
+      font-size: .82rem; font-weight: 800; letter-spacing: .1em;
+      margin-bottom: 28px; text-transform: uppercase;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--o); animation: bdot 1.6s ease-in-out infinite;
+    }
+    @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    #hero-h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800; line-height: 1.15;
+      margin-bottom: 18px;
+    }
+    #hero-h1 .prenom { color: var(--o); }
+    #hero-h1 .viol   { color: var(--v); }
+
+    .hero-sub {
+      font-size: 1.05rem; color: var(--muted);
+      margin-bottom: 0; line-height: 1.7;
+    }
+    .hero-sub span { color: var(--txt); font-weight: 700; }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      font-size: .72rem; color: var(--muted); letter-spacing: .08em;
+    }
+    .scroll-arrow {
+      width: 20px; height: 20px; border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted); transform: rotate(45deg);
+      animation: sarrow 1.4s ease-in-out infinite;
+    }
+    @keyframes sarrow { 0%,100%{transform:rotate(45deg) translate(0,0);opacity:1} 50%{transform:rotate(45deg) translate(4px,4px);opacity:.4} }
+
+    /* ══════════════════════════════════════════════════════
+       2. AUDIO PLAYER
+    ═════════════════════════════════════════════════════════ */
+    #player-section {
+      padding: 80px 24px;
+      background: linear-gradient(180deg, transparent, rgba(108,99,255,.04), transparent);
+    }
+    .player-wrap { max-width: 680px; margin: 0 auto; }
+
+    .player-card {
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(108,99,255,.25);
+      border-radius: 28px; padding: 36px 32px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .player-header {
+      display: flex; align-items: center; gap: 18px; margin-bottom: 28px;
+    }
+    .player-cover {
+      width: 64px; height: 64px; border-radius: 16px; flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(108,99,255,.5), rgba(255,209,102,.35));
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+    }
+    .player-meta h3 {
+      font-size: 1.05rem; font-weight: 800; margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;
+    }
+    .player-meta p { font-size: .82rem; color: var(--muted); }
+
+    /* Wave bars */
+    .wave-bars {
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; height: 52px; margin-bottom: 22px;
+    }
+    .wb {
+      width: 4px; border-radius: 3px; background: var(--v);
+      transform-origin: center;
+      animation: wbanim 1s ease-in-out infinite alternate;
+    }
+    .wb.playing { opacity: 1; }
+    .wb.paused { animation-play-state: paused; opacity: .35; }
+    @keyframes wbanim { from{transform:scaleY(.15)} to{transform:scaleY(1)} }
+
+    /* Controls */
+    .player-controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: 18px; margin-bottom: 22px;
+    }
+    .ctrl-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 1.4rem; color: var(--muted);
+      transition: color .2s, transform .15s;
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+    }
+    .ctrl-btn:hover { color: var(--txt); transform: scale(1.12); }
+
+    .play-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--v); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; color: #fff;
+      box-shadow: 0 6px 28px rgba(108,99,255,.5);
+      transition: transform .2s, background .2s, box-shadow .2s;
+    }
+    .play-btn:hover { transform: scale(1.08); background: #5548e0; box-shadow: 0 10px 36px rgba(108,99,255,.6); }
+
+    /* Progress bar */
+    .progress-wrap { margin-bottom: 10px; position: relative; }
+    .progress-bg {
+      height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,.1); cursor: pointer; position: relative;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--v), #9b8fff);
+      position: relative; transition: width .5s linear;
+    }
+    .progress-thumb {
+      position: absolute; right: -8px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--o); box-shadow: 0 2px 10px rgba(255,209,102,.5);
+      transition: transform .2s;
+    }
+    .progress-bg:hover .progress-thumb { transform: translateY(-50%) scale(1.3); }
+
+    .player-times {
+      display: flex; justify-content: space-between;
+      font-size: .78rem; color: var(--muted); font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       3. STORY TEXT
+    ═════════════════════════════════════════════════════════ */
+    #story-section { padding: 80px 24px; }
+    .story-wrap { max-width: 720px; margin: 0 auto; }
+
+    .story-header { margin-bottom: 48px; }
+    .stag {
+      display: inline-block;
+      background: var(--vl); color: var(--v);
+      border: 1px solid var(--vm); padding: 5px 16px;
+      border-radius: 50px; font-size: .78rem; font-weight: 700;
+      letter-spacing: .08em; margin-bottom: 14px; text-transform: uppercase;
+    }
+    .story-title { font-size: clamp(1.6rem,3vw,2.2rem); font-weight: 800; line-height: 1.25; }
+    .story-title .prenom { color: var(--o); }
+
+    .story-divider {
+      width: 60px; height: 3px; margin: 20px 0;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      border-radius: 2px;
+    }
+
+    .story-body { display: flex; flex-direction: column; gap: 26px; }
+
+    .story-p {
+      font-size: 1.1rem; line-height: 1.9;
+      color: rgba(232,232,240,.85); font-weight: 400;
+    }
+    .story-p strong { color: var(--o); font-weight: 700; }
+    .story-p.moral {
+      font-style: italic; color: var(--o);
+      font-size: 1.05rem; font-weight: 600;
+      background: rgba(255,209,102,.07); border-left: 3px solid var(--o);
+      border-radius: 0 12px 12px 0; padding: 16px 20px;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       4. ILLUSTRATIONS
+    ═════════════════════════════════════════════════════════ */
+    #illus-section { padding: 80px 24px; background: rgba(255,255,255,.01); }
+    .illus-wrap { max-width: 1100px; margin: 0 auto; }
+
+    .illus-header { margin-bottom: 48px; }
+    .illus-header h2 { font-size: clamp(1.6rem,3vw,2.2rem); font-weight: 800; }
+    .illus-header p { font-size: .95rem; color: var(--muted); margin-top: 8px; }
+
+    .illus-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto;
+      gap: 16px;
+    }
+
+    /* First illustration spans 2 columns */
+    .illus-card:first-child { grid-column: span 2; }
+    /* Last illustration spans 2 columns */
+    .illus-card:last-child { grid-column: span 2; }
+
+    .illus-card {
+      background: var(--card);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--cb); border-radius: 20px;
+      overflow: hidden; aspect-ratio: 16/10; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .illus-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+
+    .illus-bg {
+      position: absolute; inset: 0;
+      transition: opacity .3s;
+    }
+    .illus-card:nth-child(1) .illus-bg { background: linear-gradient(135deg, #0d0d30, #1a0a40, #2d1b69); }
+    .illus-card:nth-child(2) .illus-bg { background: linear-gradient(135deg, #0a1628, #142a4a, #1e3a5f); }
+    .illus-card:nth-child(3) .illus-bg { background: linear-gradient(135deg, #1a0a2e, #2d1b4e, #3d2460); }
+    .illus-card:nth-child(4) .illus-bg { background: linear-gradient(135deg, #0d1a2e, #1a2e4a, #243858); }
+    .illus-card:nth-child(5) .illus-bg { background: linear-gradient(135deg, #100a2e, #1e1545, #2d2060); }
+
+    .illus-stars {
+      position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    }
+    .istar {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,.8); animation: itwinkle 2s ease-in-out infinite alternate;
+    }
+    @keyframes itwinkle { from{opacity:.2} to{opacity:1} }
+
+    .illus-emoji {
+      position: relative; z-index: 1;
+      font-size: clamp(3rem, 6vw, 5rem);
+      filter: drop-shadow(0 0 30px rgba(255,255,255,.3));
+      transition: transform .3s;
+      user-select: none;
+    }
+    .illus-card:hover .illus-emoji { transform: scale(1.12); }
+
+    .illus-label {
+      position: absolute; bottom: 14px; left: 14px; right: 14px; z-index: 2;
+      font-family: 'Baloo 2', cursive; font-weight: 700; font-size: .82rem;
+      color: rgba(255,255,255,.7);
+      background: rgba(0,0,0,.3); backdrop-filter: blur(8px);
+      padding: 5px 12px; border-radius: 50px;
+      display: inline-block; width: fit-content;
+    }
+    .illus-badge {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      background: rgba(108,99,255,.6); backdrop-filter: blur(8px);
+      color: #fff; font-size: .7rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 50px; letter-spacing: .05em;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       5. CTA FINAL
+    ═════════════════════════════════════════════════════════ */
+    #cta-section {
+      padding: 100px 24px;
+      background: linear-gradient(160deg,
+        rgba(108,99,255,.14) 0%,
+        rgba(26,26,46,.9) 45%,
+        rgba(108,99,255,.08) 100%);
+      position: relative; overflow: hidden; text-align: center;
+    }
+    #cta-section::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(108,99,255,.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-in { position: relative; z-index: 1; max-width: 660px; margin: 0 auto; }
+
+    .cta-h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; line-height: 1.2; margin-bottom: 16px;
+    }
+    .cta-h2 .o { color: var(--o); }
+    .cta-h2 .v { color: var(--v); }
+
+    .cta-sub { font-size: 1.02rem; color: var(--muted); line-height: 1.7; margin-bottom: 36px; }
+
+    .btn-gold {
+      display: inline-flex; align-items: center; gap: 10px;
+      position: relative; overflow: hidden;
+      background: var(--o); color: var(--n);
+      padding: 18px 52px; border-radius: 50px;
+      font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 800;
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 40px rgba(255,209,102,.38);
+      transition: transform .2s, box-shadow .2s; margin-bottom: 20px;
+    }
+    .btn-gold:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 56px rgba(255,209,102,.5); }
+
+    .cta-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+      color: #4ade80; padding: 7px 18px; border-radius: 50px;
+      font-size: .82rem; font-weight: 700; margin-bottom: 36px;
+    }
+
+    .cta-stats {
+      display: flex; justify-content: center; gap: 36px; flex-wrap: wrap;
+    }
+    .cstat {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .cstat-ico {
+      font-size: 1.5rem; width: 52px; height: 52px;
+      border-radius: 14px; background: var(--vl);
+      border: 1px solid var(--vm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cstat-label { font-size: .88rem; font-weight: 700; color: var(--txt); }
+    .cstat-sub { font-size: .72rem; color: var(--muted); }
+
+    /* ── RIPPLE ───────────────────────────────────────────── */
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(0,0,0,.18); transform: scale(0);
+      animation: rip .6s linear; pointer-events: none;
+    }
+    @keyframes rip { to{transform:scale(4);opacity:0} }
+
+    /* ══════════════════════════════════════════════════════
+       FOOTER
+    ═════════════════════════════════════════════════════════ */
+    #foot { position:relative; background:rgba(0,0,0,.2); padding:70px 48px 36px; }
+    .fwave { position:absolute; top:-2px; left:0; right:0; line-height:0; }
+    .fwave svg { width:100%; display:block; }
+    .fi { max-width:1280px; margin:0 auto; }
+    .ftop { display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:52px; margin-bottom:48px; }
+    .fbrand .nav-logo { margin-bottom:12px; }
+    .fdesc { font-size:.84rem; color:var(--muted); line-height:1.7; margin-bottom:16px; max-width:260px; }
+    .fsocial { display:flex; gap:9px; }
+    .fsoc { width:36px; height:36px; border-radius:9px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-size:.9rem; transition:background .2s,border-color .2s; }
+    .fsoc:hover { background:var(--vl); border-color:var(--v); }
+    .fcol h4 { font-size:.9rem; font-weight:700; margin-bottom:16px; }
+    .flinks { list-style:none; display:flex; flex-direction:column; gap:9px; }
+    .flinks a { font-size:.84rem; color:var(--muted); transition:color .2s; }
+    .flinks a:hover { color:var(--v); }
+    .fbot { border-top:1px solid rgba(255,255,255,.06); padding-top:22px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .fbot p { font-size:.78rem; color:var(--muted); }
+    .fbot em { color:var(--v); font-style:normal; }
+
+    /* ── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width:768px) {
+      #nav,#nav.scrolled { padding-left:24px; padding-right:24px; }
+      .nav-links { display:none; }
+      #burger { display:flex; }
+      .player-card { padding:24px 18px; }
+      .player-meta h3 { font-size:.92rem; max-width:220px; }
+      .illus-grid { grid-template-columns:1fr 1fr; }
+      .illus-card:first-child,
+      .illus-card:last-child { grid-column: span 2; }
+      .cta-stats { gap:20px; }
+      .ftop { grid-template-columns:1fr; gap:28px; }
+      .fbot { flex-direction:column; text-align:center; }
+      #foot { padding:60px 24px 28px; }
+    }
+    @media (max-width:480px) {
+      .illus-grid { grid-template-columns:1fr; }
+      .illus-card:first-child,
+      .illus-card:last-child { grid-column: span 1; }
+      .illus-card:first-child { aspect-ratio: 4/3; }
+      .hero-badge { font-size:.72rem; padding:7px 14px; }
+      #cta-section { padding:72px 18px; }
+    }
+    @media (min-width:1440px) {
+      #foot { padding:80px 64px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="sp"></div>
+<div id="cd"></div>
+<div id="cr"></div>
+
+<!-- ══ NAVBAR ════════════════════════════════════════════ -->
+<nav id="nav">
+  <a href="index.html" class="nav-logo">
+    <img src="logo.png" height="40" alt="TinyTale">
+    <span>Tiny<span class="vt">Tale</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html#how">Comment ça marche</a></li>
+    <li><a href="index.html#why">Pourquoi nous</a></li>
+    <li><a href="index.html#pricing">Tarifs</a></li>
+    <li><a href="create.html" class="nav-cta">Créer la mienne</a></li>
+  </ul>
+  <button id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+</nav>
+<div id="mmenu">
+  <a href="index.html#how" class="ml">Comment ça marche</a>
+  <a href="index.html#why" class="ml">Pourquoi nous</a>
+  <a href="index.html#pricing" class="ml">Tarifs</a>
+  <a href="create.html" class="ml" style="color:var(--v)">Créer la mienne →</a>
+</div>
+
+<!-- ══ 1. HERO ════════════════════════════════════════════ -->
+<section id="hero">
+  <canvas id="hcvs"></canvas>
+
+  <div class="hero-in">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      <span id="badge-txt">6 ANS · AVENTURE · COURAGE</span>
+    </div>
+
+    <h1 id="hero-h1">
+      L'Aventure de <span class="prenom" id="hero-prenom">Lucas</span><br>
+      dans les <span class="viol">Étoiles</span>
+    </h1>
+
+    <p class="hero-sub" style="margin-top:18px">
+      Créée avec la voix de <span>Papa</span> &nbsp;·&nbsp;
+      <span>4 min 32</span> &nbsp;·&nbsp;
+      Illustrée par IA
+    </p>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Écouter</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ══ 2. AUDIO PLAYER ════════════════════════════════════ -->
+<section id="player-section">
+  <div class="player-wrap">
+    <div class="player-card reveal">
+      <div class="player-header">
+        <div class="player-cover">🌟</div>
+        <div class="player-meta">
+          <h3 id="player-title">L'Aventure de Lucas dans les Étoiles</h3>
+          <p>TinyTale · 2025 · Narration vocale IA</p>
+        </div>
+      </div>
+
+      <!-- Wave bars -->
+      <div class="wave-bars" id="wave-bars"></div>
+
+      <!-- Controls -->
+      <div class="player-controls">
+        <button class="ctrl-btn" id="btn-prev" title="Début" aria-label="Revenir au début">⏮</button>
+        <button class="play-btn" id="btn-play" aria-label="Lecture / Pause">▶</button>
+        <button class="ctrl-btn" id="btn-next" title="Fin" aria-label="Aller à la fin">⏭</button>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-wrap">
+        <div class="progress-bg" id="prog-bg">
+          <div class="progress-fill" id="prog-fill">
+            <div class="progress-thumb"></div>
+          </div>
+        </div>
+      </div>
+      <div class="player-times">
+        <span id="time-cur">0:00</span>
+        <span>4:32</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. STORY TEXT ══════════════════════════════════════ -->
+<section id="story-section">
+  <div class="story-wrap">
+    <div class="story-header reveal">
+      <span class="stag">L'histoire complète</span>
+      <h2 class="story-title">L'Aventure de <span class="prenom" id="story-prenom">Lucas</span> dans les Étoiles</h2>
+      <div class="story-divider"></div>
+    </div>
+
+    <div class="story-body">
+      <p class="story-p reveal">
+        Il était une fois un petit garçon nommé <strong id="p-prenom-1">Lucas</strong>, âgé de six ans, qui vivait dans une petite maison au bout d'un chemin bordé de tournesols. Chaque soir, avant de fermer les yeux, <strong id="p-prenom-2">Lucas</strong> collait son nez contre la fenêtre froide et regardait le ciel noir scintiller de mille lumières dorées. Il se demandait si, un jour, il pourrait toucher les étoiles du bout des doigts.
+      </p>
+
+      <p class="story-p reveal" style="transition-delay:.1s">
+        Un soir de pleine lune, une étoile — plus brillante que toutes les autres — se détacha du ciel et tomba doucement dans le jardin de <strong id="p-prenom-3">Lucas</strong>. Ce n'était pas une étoile ordinaire. C'était Sélène, une petite fée des constellations aux ailes de lumière bleutée, qui cherchait un compagnon courageux pour l'aider à réparer la Grande Ourse, cassée en deux morceaux depuis que le vent cosmique l'avait soufflée trop fort.
+      </p>
+
+      <p class="story-p reveal" style="transition-delay:.2s">
+        Sans hésiter une seule seconde — car <strong id="p-prenom-4">Lucas</strong> avait du courage plein le cœur — il attrapa la main de Sélène et tous deux s'envolèrent vers les étoiles. Le froid de la nuit ne l'effrayait pas : le courage, c'est précisément avancer même quand on a un peu peur. Ils traversèrent des nuages de sucre, esquivèrent des comètes joueuses, et saluèrent la Lune qui leur sourit en clignant de l'œil.
+      </p>
+
+      <p class="story-p reveal" style="transition-delay:.3s">
+        Arrivés près de la Grande Ourse, <strong id="p-prenom-5">Lucas</strong> sortit de sa poche la colle magique que sa maman lui avait toujours dit de garder pour les urgences. Morceau après morceau, patiemment et avec soin, il replaça chaque étoile à sa place exacte. Quand la dernière s'enclencha avec un petit <em>clic</em> lumineux, le ciel tout entier applaudit en scintillant deux fois plus fort qu'à l'ordinaire.
+      </p>
+
+      <p class="story-p moral reveal" style="transition-delay:.4s">
+        ✨ Ce soir-là, en rentrant chez lui les yeux plein d'étoiles, <strong id="p-prenom-6">Lucas</strong> comprit que le courage n'est pas l'absence de peur — c'est choisir d'avancer malgré elle. Et chaque nuit depuis, la Grande Ourse lui cligne de l'œil pour lui dire merci.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. ILLUSTRATIONS ═══════════════════════════════════ -->
+<section id="illus-section">
+  <div class="illus-wrap">
+    <div class="illus-header reveal">
+      <span class="stag">Illustrations</span>
+      <h2>5 illustrations <span style="color:var(--v)">générées par IA</span></h2>
+      <p>Chaque scène clé de l'histoire, visualisée en style conte illustré.</p>
+    </div>
+
+    <div class="illus-grid">
+      <!-- 1 — span 2 cols -->
+      <div class="illus-card reveal">
+        <div class="illus-bg"></div>
+        <div class="illus-stars" id="is0"></div>
+        <div class="illus-emoji">🚀</div>
+        <div class="illus-label">L'envol vers les étoiles</div>
+        <div class="illus-badge">Scène 1</div>
+      </div>
+      <!-- 2 -->
+      <div class="illus-card reveal" style="transition-delay:.1s">
+        <div class="illus-bg"></div>
+        <div class="illus-stars" id="is1"></div>
+        <div class="illus-emoji">🌌</div>
+        <div class="illus-label">Le cosmos à l'infini</div>
+        <div class="illus-badge">Scène 2</div>
+      </div>
+      <!-- 3 -->
+      <div class="illus-card reveal" style="transition-delay:.15s">
+        <div class="illus-bg"></div>
+        <div class="illus-stars" id="is2"></div>
+        <div class="illus-emoji">🦸</div>
+        <div class="illus-label">Le héros courageux</div>
+        <div class="illus-badge">Scène 3</div>
+      </div>
+      <!-- 4 -->
+      <div class="illus-card reveal" style="transition-delay:.2s">
+        <div class="illus-bg"></div>
+        <div class="illus-stars" id="is3"></div>
+        <div class="illus-emoji">⭐</div>
+        <div class="illus-label">La Grande Ourse réparée</div>
+        <div class="illus-badge">Scène 4</div>
+      </div>
+      <!-- 5 — span 2 cols -->
+      <div class="illus-card reveal" style="transition-delay:.25s">
+        <div class="illus-bg"></div>
+        <div class="illus-stars" id="is4"></div>
+        <div class="illus-emoji">🏠</div>
+        <div class="illus-label">Retour à la maison</div>
+        <div class="illus-badge">Scène 5</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. CTA FINAL ═══════════════════════════════════════ -->
+<section id="cta-section">
+  <div class="cta-in">
+    <div class="reveal">
+      <span class="stag">Votre tour</span>
+      <h2 class="cta-h2">
+        Créez l'histoire unique<br>de <span class="o">votre</span> <span class="v">enfant</span>
+      </h2>
+      <p class="cta-sub">
+        En 30 secondes, personnalisez le prénom, l'âge, le thème et la voix.<br>
+        Notre IA crée un conte sur-mesure que votre enfant n'oubliera jamais.
+      </p>
+
+      <a href="create.html" class="btn-gold" id="cta-btn">
+        ✨ Créer ma propre histoire
+      </a>
+
+      <br>
+      <div class="cta-badge">
+        🎁 Première histoire offerte · Sans carte bancaire
+      </div>
+
+      <div class="cta-stats">
+        <div class="cstat">
+          <div class="cstat-ico">✨</div>
+          <div class="cstat-label">30 secondes</div>
+          <div class="cstat-sub">pour créer</div>
+        </div>
+        <div class="cstat">
+          <div class="cstat-ico">🎙️</div>
+          <div class="cstat-label">Ta voix</div>
+          <div class="cstat-sub">clonée par IA</div>
+        </div>
+        <div class="cstat">
+          <div class="cstat-ico">🌟</div>
+          <div class="cstat-label">100% unique</div>
+          <div class="cstat-sub">jamais identique</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ════════════════════════════════════════════ -->
+<footer id="foot">
+  <div class="fwave">
+    <svg viewBox="0 0 1440 64" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0 64 L0 32 Q360 0 720 24 Q1080 48 1440 20 L1440 64 Z" fill="#1A1A2E"/>
+    </svg>
+  </div>
+  <div class="fi">
+    <div class="ftop">
+      <div class="fbrand">
+        <a href="index.html" class="nav-logo">
+          <img src="logo.png" height="34" alt="TinyTale">
+          <span>Tiny<span class="vt">Tale</span></span>
+        </a>
+        <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans.</p>
+        <div class="fsocial">
+          <a href="#" class="fsoc" aria-label="Instagram">📷</a>
+          <a href="#" class="fsoc" aria-label="Facebook">📘</a>
+          <a href="#" class="fsoc" aria-label="TikTok">🎵</a>
+        </div>
+      </div>
+      <div class="fcol">
+        <h4>Produit</h4>
+        <ul class="flinks">
+          <li><a href="index.html#how">Comment ça marche</a></li>
+          <li><a href="index.html#pricing">Tarifs</a></li>
+          <li><a href="create.html">Créer une histoire</a></li>
+        </ul>
+      </div>
+      <div class="fcol">
+        <h4>Légal</h4>
+        <ul class="flinks">
+          <li><a href="#">Mentions légales</a></li>
+          <li><a href="#">Confidentialité</a></li>
+          <li><a href="mailto:contact@tinytale.org">contact@tinytale.org</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="fbot">
+      <p>© 2025 <em>TinyTale</em>. Tous droits réservés.</p>
+      <p>Propulsé par <em>Claude</em> · <em>ElevenLabs</em> · <em>Leonardo AI</em></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ─── PRENOM FROM localStorage ──────────────────────────── */
+const prenom = localStorage.getItem('tinytale_prenom') || 'Lucas';
+const theme  = localStorage.getItem('tinytale_theme')  || 'Espace';
+const age    = localStorage.getItem('tinytale_age')    || '6';
+const valeur = localStorage.getItem('tinytale_valeur') || 'Courage';
+
+/* Inject prenom everywhere */
+document.getElementById('hero-prenom').textContent   = prenom;
+document.getElementById('story-prenom').textContent  = prenom;
+document.getElementById('player-title').textContent  = `L'Aventure de ${prenom} dans les Étoiles`;
+document.getElementById('p-prenom-1').textContent    = prenom;
+document.getElementById('p-prenom-2').textContent    = prenom;
+document.getElementById('p-prenom-3').textContent    = prenom;
+document.getElementById('p-prenom-4').textContent    = prenom;
+document.getElementById('p-prenom-5').textContent    = prenom;
+document.getElementById('p-prenom-6').textContent    = prenom;
+document.getElementById('badge-txt').textContent     = `${age} ANS · ${theme.toUpperCase()} · ${valeur.toUpperCase()}`;
+document.getElementById('hero-h1').innerHTML =
+  `L'Aventure de <span class="prenom">${prenom}</span><br>dans les <span class="viol">Étoiles</span>`;
+document.title = `L'histoire de ${prenom} – TinyTale`;
+
+/* ─── CURSOR ─────────────────────────────────────────────── */
+const cd = document.getElementById('cd');
+const cr = document.getElementById('cr');
+let mx=0, my=0, rx=0, ry=0;
+document.addEventListener('mousemove', e => {
+  mx=e.clientX; my=e.clientY;
+  cd.style.left=mx+'px'; cd.style.top=my+'px';
+});
+(function L(){ rx+=(mx-rx)*.11; ry+=(my-ry)*.11; cr.style.left=rx+'px'; cr.style.top=ry+'px'; requestAnimationFrame(L); })();
+document.querySelectorAll('a,button').forEach(el => {
+  el.addEventListener('mouseenter', ()=>document.body.classList.add('ch'));
+  el.addEventListener('mouseleave', ()=>document.body.classList.remove('ch'));
+});
+
+/* ─── NAVBAR ─────────────────────────────────────────────── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', ()=>nav.classList.toggle('scrolled', window.scrollY>40), {passive:true});
+const burger=document.getElementById('burger'), mmenu=document.getElementById('mmenu');
+burger.addEventListener('click', ()=>{ burger.classList.toggle('open'); mmenu.classList.toggle('open'); });
+document.querySelectorAll('.ml').forEach(a=>a.addEventListener('click', ()=>{ burger.classList.remove('open'); mmenu.classList.remove('open'); }));
+
+/* ─── SCROLL PROGRESS ────────────────────────────────────── */
+const sp = document.getElementById('sp');
+window.addEventListener('scroll', ()=>{
+  sp.style.width = (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+}, {passive:true});
+
+/* ─── HERO CANVAS (stars + shooting) ────────────────────── */
+const cvs=document.getElementById('hcvs'), ctx=cvs.getContext('2d');
+function rz(){ cvs.width=window.innerWidth; cvs.height=window.innerHeight; }
+rz(); window.addEventListener('resize', rz);
+
+const stars = Array.from({length:160}, ()=>({
+  x:Math.random()*9999, y:Math.random()*9999,
+  r:Math.random()*1.5+.3, a:Math.random(),
+  da:(Math.random()*.007+.002)*(Math.random()>.5?1:-1)
+}));
+const sshots=[];
+setInterval(()=>sshots.push({
+  x:Math.random()*cvs.width, y:Math.random()*cvs.height*.45,
+  len:70+Math.random()*110, spd:6+Math.random()*8, a:1, ang:Math.PI/4
+}), 3400);
+
+(function draw(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  const bg=ctx.createLinearGradient(0,0,0,cvs.height);
+  bg.addColorStop(0,'#080820'); bg.addColorStop(1,'#1A1A2E');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  const glow=ctx.createRadialGradient(cvs.width*.6,cvs.height*.3,0,cvs.width*.6,cvs.height*.3,300);
+  glow.addColorStop(0,'rgba(108,99,255,.1)'); glow.addColorStop(1,'transparent');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  stars.forEach(s=>{
+    s.a+=s.da; if(s.a>1||s.a<.05) s.da*=-1;
+    ctx.beginPath(); ctx.arc(s.x%cvs.width,s.y%cvs.height,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${s.a})`; ctx.fill();
+  });
+
+  for(let i=sshots.length-1;i>=0;i--){
+    const s=sshots[i];
+    const x2=s.x-Math.cos(s.ang)*s.len, y2=s.y-Math.sin(s.ang)*s.len;
+    const g=ctx.createLinearGradient(s.x,s.y,x2,y2);
+    g.addColorStop(0,`rgba(255,255,255,${s.a})`); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(x2,y2);
+    ctx.strokeStyle=g; ctx.lineWidth=1.5; ctx.stroke();
+    s.x+=Math.cos(s.ang)*s.spd; s.y+=Math.sin(s.ang)*s.spd; s.a-=.02;
+    if(s.a<=0) sshots.splice(i,1);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* ─── ILLUSTRATION MINI-STARS ────────────────────────────── */
+['is0','is1','is2','is3','is4'].forEach(id => {
+  const el=document.getElementById(id);
+  for(let i=0;i<18;i++){
+    const s=document.createElement('div'); s.className='istar';
+    const sz=Math.random()*2+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s`;
+    el.appendChild(s);
+  }
+});
+
+/* ─── AUDIO PLAYER ───────────────────────────────────────── */
+const DURATION = 272; // 4:32 in seconds
+let currentTime = 0;
+let playing = false;
+let playInterval = null;
+
+/* Build wave bars */
+const wrapEl = document.getElementById('wave-bars');
+const BARS = 20;
+const heights = [30,55,80,65,45,90,70,50,75,95,85,60,40,80,65,50,90,70,45,60];
+for(let i=0;i<BARS;i++){
+  const b=document.createElement('div'); b.className='wb paused';
+  b.style.height = heights[i]+'%';
+  b.style.animationDelay = (i*.06)+'s';
+  b.style.animationDuration = (.7+Math.random()*.7)+'s';
+  wrapEl.appendChild(b);
+}
+
+function fmtTime(s){
+  const m=Math.floor(s/60), sec=Math.floor(s%60);
+  return m+':'+(sec<10?'0':'')+sec;
+}
+
+function updateUI(){
+  const pct = currentTime/DURATION*100;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('time-cur').textContent = fmtTime(currentTime);
+}
+
+function setPlaying(val){
+  playing=val;
+  document.getElementById('btn-play').textContent = playing ? '⏸' : '▶';
+  document.getElementById('btn-play').setAttribute('aria-label', playing ? 'Pause' : 'Lecture');
+  const bars=document.querySelectorAll('.wb');
+  bars.forEach(b=>{
+    b.classList.toggle('playing', playing);
+    b.classList.toggle('paused', !playing);
+    b.style.animationPlayState = playing ? 'running' : 'paused';
+  });
+  if(playing){
+    playInterval=setInterval(()=>{
+      currentTime+=0.5;
+      if(currentTime>=DURATION){ currentTime=DURATION; setPlaying(false); }
+      updateUI();
+    }, 500);
+  } else {
+    clearInterval(playInterval);
+  }
+}
+
+document.getElementById('btn-play').addEventListener('click', ()=>setPlaying(!playing));
+document.getElementById('btn-prev').addEventListener('click', ()=>{ currentTime=0; updateUI(); if(playing){clearInterval(playInterval);setPlaying(true);} });
+document.getElementById('btn-next').addEventListener('click', ()=>{ currentTime=DURATION; setPlaying(false); updateUI(); });
+
+/* Click on progress bar */
+document.getElementById('prog-bg').addEventListener('click', e=>{
+  const rc=e.currentTarget.getBoundingClientRect();
+  currentTime=((e.clientX-rc.left)/rc.width)*DURATION;
+  updateUI();
+});
+
+/* Ripple on CTA */
+document.getElementById('cta-btn').addEventListener('click', e=>{
+  const rip=document.createElement('span'); rip.className='ripple';
+  const rc=e.currentTarget.getBoundingClientRect(), sz=Math.max(rc.width,rc.height)*2;
+  rip.style.cssText=`width:${sz}px;height:${sz}px;left:${e.clientX-rc.left-sz/2}px;top:${e.clientY-rc.top-sz/2}px`;
+  e.currentTarget.appendChild(rip);
+  rip.addEventListener('animationend',()=>rip.remove());
+});
+
+/* ─── INTERSECTION OBSERVER REVEAL ─────────────────────── */
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
