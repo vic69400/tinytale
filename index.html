@@ -784,10 +784,12 @@
            Taille recommandée : 480×560px (portrait)
            Pour remplacer : <img src="hero-enfant.jpg" style="width:100%;border-radius:24px;object-fit:cover;">
            ═══════════════════════════════════════════ -->
-      <div class="img-slot" style="width:100%;max-width:420px;height:380px;margin:0 auto 32px;">
-        <span class="img-slot-icon">📸</span>
-        <span class="img-slot-label">Photo ambiance Hero</span>
-        <span class="img-slot-size">480 × 560 px</span>
+      <div style="width:100%;max-width:460px;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(108,99,255,0.3);">
+        <!-- 📷 REMPLACE hero-enfant.jpg par ton image Leonardo -->
+        <img src="hero-enfant.jpg"
+             alt="Enfant qui écoute son histoire TinyTale"
+             style="width:100%;height:420px;object-fit:cover;display:block;"
+             onerror="this.parentElement.style.display='none'">
       </div>
       <div class="phone-wrap">
         <div class="phone">
@@ -823,10 +825,12 @@
          Taille recommandée : 800×400px (paysage)
          Pour remplacer : <img src="demo-app.png" style="width:100%;border-radius:20px;">
          ═══════════════════════════════════════════ -->
-    <div class="img-slot reveal" style="width:100%;height:260px;margin-bottom:48px;">
-      <span class="img-slot-icon">📱</span>
-      <span class="img-slot-label">Capture écran app / GIF démo</span>
-      <span class="img-slot-size">800 × 400 px</span>
+    <div style="width:100%;border-radius:20px;overflow:hidden;box-shadow:0 16px 48px rgba(108,99,255,0.2);margin-bottom:48px;">
+      <!-- 📷 REMPLACE demo-app.jpg par ton image Leonardo -->
+      <img src="demo-app.jpg"
+           alt="Aperçu de l'application TinyTale"
+           style="width:100%;height:300px;object-fit:cover;display:block;"
+           onerror="this.parentElement.style.display='none'">
     </div>
     <div class="how-grid">
       <!-- SVG animated connectors -->
@@ -943,10 +947,12 @@
          Taille recommandée : 500×500px (carré)
          Pour remplacer : <img src="famille.jpg" style="width:100%;border-radius:24px;">
          ═══════════════════════════════════════════ -->
-    <div class="img-slot reveal" style="max-width:460px;height:400px;margin:48px auto 0;">
-      <span class="img-slot-icon">👨‍👩‍👧</span>
-      <span class="img-slot-label">Illustration famille</span>
-      <span class="img-slot-size">500 × 500 px</span>
+    <div style="width:100%;max-width:480px;border-radius:24px;overflow:hidden;box-shadow:0 16px 48px rgba(108,99,255,0.2);margin:48px auto 0;">
+      <!-- 📷 REMPLACE famille.jpg par ton image Leonardo -->
+      <img src="famille.jpg"
+           alt="Parent et enfant qui lisent ensemble"
+           style="width:100%;height:400px;object-fit:cover;display:block;"
+           onerror="this.parentElement.style.display='none'">
     </div>
   </div>
 </section>
