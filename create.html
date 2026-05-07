@@ -486,7 +486,7 @@
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
   <a href="index.html" class="nav-logo">
-    <img src="logo.png" height="44" alt="TinyTale">
+    <img src="logo.png" height="44" alt="TinyTale" style="mix-blend-mode:screen;"> <!-- ✅ AMÉLIORATION 3 -->
     <span>Tiny<span class="vt">Tale</span></span>
   </a>
   <ul class="nav-links">
@@ -803,7 +803,7 @@
     <div class="ftop">
       <div class="fbrand">
         <a href="index.html" class="nav-logo">
-          <img src="logo.png" height="34" alt="TinyTale">
+          <img src="logo.png" height="34" alt="TinyTale" style="mix-blend-mode:screen;"> <!-- ✅ AMÉLIORATION 3 -->
           <span>Tiny<span class="vt">Tale</span></span>
         </a>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans.</p>
@@ -1197,185 +1197,156 @@ async function genererHistoire() {
     ? TINYTALE_CONFIG.APP.MODE_TEST
     : true;
 
-  showLoader();
+  showLoader('Création de l\'histoire...'); // ✅ AMÉLIORATION 2
 
-  /* ────────────────────────────────────────────────────
-     BLOC A — STRIPE (paiement si histoire non gratuite)
-  ──────────────────────────────────────────────────────
-  if (!isFree) {
+  // ══════════════════════════════════════════
+  // BLOC A — STRIPE (paiement si pas gratuit)
+  // 1. Va sur stripe.com → crée les produits
+  // 2. Mets ta clé dans config.js → STRIPE.PUBLIC_KEY
+  // 3. Mets tes Price IDs dans config.js → STRIPE.PRODUCTS
+  // 4. Décommente ce bloc
+  // ══════════════════════════════════════════
+  /*
+  if (!TINYTALE_CONFIG.APP.PREMIERE_HISTOIRE_GRATUITE) {
     const stripe = Stripe(TINYTALE_CONFIG.STRIPE.PUBLIC_KEY);
-
-    // Créez une PaymentIntent côté serveur (endpoint /api/create-payment-intent)
-    const res = await fetch('/api/create-payment-intent', {
+    const resp = await fetch('/api/create-checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: 499, // centimes
-        currency: 'eur',
-        priceId: TINYTALE_CONFIG.STRIPE.PRODUCTS.HISTOIRE_UNIQUE.PRICE_ID,
-      }),
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ priceId: TINYTALE_CONFIG.STRIPE.PRODUCTS.HISTOIRE_UNIQUE.PRICE_ID })
     });
-    const { clientSecret } = await res.json();
-
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card: cardElement }, // cardElement monté via stripe.elements()
-    });
-    if (error) { hideLoader(); alert('Paiement échoué : ' + error.message); return; }
-    if (paymentIntent.status !== 'succeeded') { hideLoader(); return; }
+    const { sessionId } = await resp.json();
+    await stripe.redirectToCheckout({ sessionId });
+    return;
   }
-  ──────────────────────────────────────────────────── */
+  */
 
-  /* ────────────────────────────────────────────────────
-     BLOC B — CLAUDE API (génération du texte de l'histoire)
-  ──────────────────────────────────────────────────────
+  // ══════════════════════════════════════════
+  // BLOC B — CLAUDE API (génère l'histoire)
+  // 1. Va sur console.anthropic.com → crée une clé API
+  // 2. Mets ta clé dans config.js → ANTHROPIC.API_KEY
+  // 3. Décommente ce bloc
+  // ══════════════════════════════════════════
+  /*
+  updateLoader('✍️ Écriture de l\'histoire...');
   const prompt = TINYTALE_CONFIG.ANTHROPIC.PROMPT_TEMPLATE
     .replace('{prenom}', state.prenom)
     .replace('{age}',    state.age)
     .replace('{theme}',  state.theme)
-    .replace('{langue}', 'Français');
-
-  // Ajout de la valeur et de la durée dans le prompt
-  const fullPrompt = prompt + `\nValeur principale : ${state.valeur}.\nDurée cible : ${state.duree} minutes de lecture.`;
-
-  const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+    .replace('{langue}', 'français');
+  const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'x-api-key':         TINYTALE_CONFIG.ANTHROPIC.API_KEY,
+      'x-api-key': TINYTALE_CONFIG.ANTHROPIC.API_KEY,
       'anthropic-version': '2023-06-01',
-      'content-type':      'application/json',
+      'content-type': 'application/json'
     },
     body: JSON.stringify({
-      model:      TINYTALE_CONFIG.ANTHROPIC.MODEL,
+      model: TINYTALE_CONFIG.ANTHROPIC.MODEL,
       max_tokens: TINYTALE_CONFIG.ANTHROPIC.MAX_TOKENS,
-      messages:   [{ role: 'user', content: fullPrompt }],
-    }),
+      messages: [{ role: 'user', content: prompt }]
+    })
   });
-  const claudeData = await claudeRes.json();
-  const storyText = claudeData.content[0].text;
-  ──────────────────────────────────────────────────── */
+  const claudeData = await claudeResp.json();
+  const texteHistoire = claudeData.content[0].text;
+  localStorage.setItem('tinytale_texte', texteHistoire);
+  */
 
-  /* ────────────────────────────────────────────────────
-     BLOC C — ELEVENLABS (narration audio)
-     Option 1 : Clone de voix (si state.voixBlob ou state.voixFile)
-     Option 2 : Text-to-Speech avec voix par défaut
-  ──────────────────────────────────────────────────────
-  let voiceId = TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS.VOICE_ID;
-
-  // Clone de voix si enregistrement disponible
-  if (state.voixBlob || state.voixFile) {
-    const cloneForm = new FormData();
-    cloneForm.append('name', `Voix de ${state.prenom}`);
-    cloneForm.append('description', `Clone pour l'histoire TinyTale de ${state.prenom}`);
-    cloneForm.append('files', state.voixBlob || state.voixFile);
-
-    const cloneRes = await fetch('https://api.elevenlabs.io/v1/voices/add', {
-      method: 'POST',
-      headers: { 'xi-api-key': TINYTALE_CONFIG.ELEVENLABS.API_KEY },
-      body: cloneForm,
-    });
-    const cloneData = await cloneRes.json();
-    voiceId = cloneData.voice_id; // Utiliser la voix clonée
-  }
-
-  // Text-to-speech
-  const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+  // ══════════════════════════════════════════
+  // BLOC C — ELEVENLABS (clone la voix)
+  // 1. Va sur elevenlabs.io → récupère ta clé API
+  // 2. Mets ta clé dans config.js → ELEVENLABS.API_KEY
+  // 3. Enregistre une voix dans ElevenLabs → copie le Voice ID
+  // 4. Mets le Voice ID dans config.js → ELEVENLABS.VOICE_SETTINGS.VOICE_ID
+  // 5. Décommente ce bloc
+  // ══════════════════════════════════════════
+  /*
+  updateLoader('🎙️ Génération de l\'audio...');
+  const vs = TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS;
+  const audioResp = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${vs.VOICE_ID}`, {
     method: 'POST',
     headers: {
-      'xi-api-key':    TINYTALE_CONFIG.ELEVENLABS.API_KEY,
-      'Content-Type':  'application/json',
+      'xi-api-key': TINYTALE_CONFIG.ELEVENLABS.API_KEY,
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      text:       storyText,
-      model_id:   TINYTALE_CONFIG.ELEVENLABS.MODEL_ID,
+      text: texteHistoire || 'Histoire de démonstration TinyTale.',
+      model_id: TINYTALE_CONFIG.ELEVENLABS.MODEL_ID,
       voice_settings: {
-        stability:        TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS.STABILITY,
-        similarity_boost: TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS.SIMILARITY_BOOST,
-        style:            TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS.STYLE,
-        use_speaker_boost:TINYTALE_CONFIG.ELEVENLABS.VOICE_SETTINGS.USE_SPEAKER_BOOST,
-      },
-    }),
-  });
-  const audioBlob = await ttsRes.blob(); // audio/mpeg
-  const audioUrl  = URL.createObjectURL(audioBlob);
-  ──────────────────────────────────────────────────── */
-
-  /* ────────────────────────────────────────────────────
-     BLOC D — LEONARDO AI (5 illustrations)
-  ──────────────────────────────────────────────────────
-  const illustrations = [];
-  const illustrationPrompts = [
-    `A child named ${state.prenom} beginning an adventure in ${state.theme}, ${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE}`,
-    `${state.prenom} discovering something magical in ${state.theme} world, ${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE}`,
-    `${state.prenom} facing a challenge with ${state.valeur}, ${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE}`,
-    `${state.prenom} finding friends in ${state.theme}, ${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE}`,
-    `${state.prenom} triumphant at the end of a ${state.theme} adventure, ${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE}`,
-  ];
-
-  for (const illPrompt of illustrationPrompts) {
-    // Lancer la génération
-    const genRes = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TINYTALE_CONFIG.LEONARDO.API_KEY}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        modelId:       TINYTALE_CONFIG.LEONARDO.MODEL_ID,
-        prompt:        illPrompt,
-        num_images:    1,
-        width:         TINYTALE_CONFIG.LEONARDO.WIDTH,
-        height:        TINYTALE_CONFIG.LEONARDO.HEIGHT,
-        guidance_scale:7,
-      }),
-    });
-    const genData = await genRes.json();
-    const genId   = genData.sdGenerationJob.generationId;
-
-    // Attendre la complétion (polling)
-    let imgUrl = null;
-    for (let attempt=0; attempt<20; attempt++) {
-      await sleep(3000);
-      const pollRes  = await fetch(`https://cloud.leonardo.ai/api/rest/v1/generations/${genId}`, {
-        headers: { 'Authorization': `Bearer ${TINYTALE_CONFIG.LEONARDO.API_KEY}` },
-      });
-      const pollData = await pollRes.json();
-      if (pollData.generations_by_pk?.status === 'COMPLETE') {
-        imgUrl = pollData.generations_by_pk.generated_images[0].url;
-        break;
+        stability: vs.STABILITY,
+        similarity_boost: vs.SIMILARITY_BOOST,
+        style: vs.STYLE,
+        use_speaker_boost: vs.USE_SPEAKER_BOOST
       }
-    }
-    if (imgUrl) illustrations.push(imgUrl);
-  }
-  ──────────────────────────────────────────────────── */
+    })
+  });
+  const audioBlob = await audioResp.blob();
+  const audioUrl = URL.createObjectURL(audioBlob);
+  localStorage.setItem('tinytale_audio_url', audioUrl);
+  */
 
-  /* ────────────────────────────────────────────────────
-     BLOC E — EMAILJS (envoi de l'histoire par e-mail)
-  ──────────────────────────────────────────────────────
-  // Initialisation EmailJS (à appeler une seule fois, idéalement au chargement)
-  // emailjs.init(TINYTALE_CONFIG.EMAILJS.PUBLIC_KEY);
+  // ══════════════════════════════════════════
+  // BLOC D — LEONARDO AI (génère illustrations)
+  // 1. Va sur app.leonardo.ai → récupère ta clé API
+  // 2. Mets ta clé dans config.js → LEONARDO.API_KEY
+  // 3. Décommente ce bloc
+  // ══════════════════════════════════════════
+  /*
+  updateLoader('🎨 Création des illustrations...');
+  const imgPrompt = `${TINYTALE_CONFIG.LEONARDO.PROMPT_STYLE},
+    brave child named ${state.prenom}, ${state.theme} adventure`;
+  const leoResp = await fetch('https://cloud.leonardo.ai/api/rest/v1/generations', {
+    method: 'POST',
+    headers: {
+      'authorization': `Bearer ${TINYTALE_CONFIG.LEONARDO.API_KEY}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      prompt: imgPrompt,
+      modelId: TINYTALE_CONFIG.LEONARDO.MODEL_ID,
+      width: TINYTALE_CONFIG.LEONARDO.WIDTH,
+      height: TINYTALE_CONFIG.LEONARDO.HEIGHT,
+      num_images: TINYTALE_CONFIG.LEONARDO.NUM_IMAGES
+    })
+  });
+  const leoData = await leoResp.json();
+  const images = leoData.sdGenerationJob?.generationId ? [leoData] : [];
+  localStorage.setItem('tinytale_images', JSON.stringify(images));
+  */
 
+  // ══════════════════════════════════════════
+  // BLOC E — EMAILJS (envoie l'histoire par email)
+  // 1. Va sur emailjs.com → configure ton service Gmail
+  // 2. Crée un template avec les variables {{prenom}} etc.
+  // 3. Mets tes IDs dans config.js → EMAILJS.*
+  // 4. Décommente ce bloc
+  // ══════════════════════════════════════════
+  /*
+  updateLoader('📧 Envoi par email...');
+  emailjs.init(TINYTALE_CONFIG.EMAILJS.PUBLIC_KEY);
   await emailjs.send(
     TINYTALE_CONFIG.EMAILJS.SERVICE_ID,
     TINYTALE_CONFIG.EMAILJS.TEMPLATE_ID,
     {
-      to_email:   userEmail,                 // email de l'utilisateur
-      prenom:     state.prenom,
-      theme:      state.theme,
-      valeur:     state.valeur,
-      duree:      state.duree,
-      audio_url:  audioUrl,
-      story_text: storyText.substring(0, 500) + '…',
-      app_name:   TINYTALE_CONFIG.APP.NAME,
-      app_url:    TINYTALE_CONFIG.APP.URL,
+      prenom:           state.prenom,
+      parent_prenom:    auth?.currentUser?.displayName || 'Cher parent',
+      age:              state.age,
+      theme:            state.theme,
+      valeur:           state.valeur,
+      titre_histoire:   `L'Aventure de ${state.prenom}`,
+      extrait_histoire: (texteHistoire || '').substring(0, 200) + '...',
+      duree:            state.duree,
+      lien_histoire:    `${TINYTALE_CONFIG.APP.URL}/demo.html`,
+      lien_desinscription: TINYTALE_CONFIG.APP.URL
     }
   );
-  ──────────────────────────────────────────────────── */
+  */
 
-  /* ────────────────────────────────────────────────────
-     SIMULATION (MODE_TEST = true ou APIs non configurées)
-     Remplace tous les blocs ci-dessus pendant le dev.
-  ──────────────────────────────────────────────────────*/
-  animateGenSteps();
+  // ══════════════════════════════════════════
+  // SIMULATION (fonctionne sans aucune API)
+  // Désactive quand les vrais blocs sont décommentés
+  // ══════════════════════════════════════════
+  await new Promise(r => setTimeout(r, 2500));
 
   localStorage.setItem('tinytale_prenom', state.prenom);
   localStorage.setItem('tinytale_theme',  state.theme);
@@ -1383,19 +1354,17 @@ async function genererHistoire() {
   localStorage.setItem('tinytale_valeur', state.valeur);
   localStorage.setItem('tinytale_duree',  state.duree);
 
-  await saveHistoireToFirestore({ // ✅ AMÉLIORATION 1 — titre complet + champs Firestore structurés
+  await saveHistoireToFirestore({
     titre:         `L'Aventure de ${state.prenom} — ${state.theme}`,
     prenom_enfant: state.prenom,
-    theme:         state.theme,
     age_enfant:    state.age,
+    theme:         state.theme,
     valeur:        state.valeur,
     duree:         state.duree,
     texte:         '',
     audio_url:     '',
-    images:        [],
+    images:        []
   });
-
-  await sleep(3200); // Simule le temps de génération API
 
   hideLoader();
   window.location.href = 'demo.html';

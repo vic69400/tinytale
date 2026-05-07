@@ -1208,6 +1208,9 @@ function renderCard(h) {
   const date  = h.date ? new Date(h.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '';
   return `
   <div class="story-card" onclick="openRead('${h.id}')">
+    <!-- 📷 EMPLACEMENT VIGNETTE HISTOIRE (SLOT F) ✅ AMÉLIORATION 1
+         <img src="${h.image_url || ''}" style="width:100%;height:100%;object-fit:cover;border-radius:16px 16px 0 0;">
+         Sauvegarde l'URL dans Firestore : h.image_url -->
     <div class="card-cover" style="">
       <div class="card-cover-bg" style="background:linear-gradient(135deg,${grad[0]},${grad[1]})"></div>
       <span class="card-cover-emoji">${emoji}</span>
