@@ -488,16 +488,13 @@
     /* ─── MICRO-INTERACTIONS ─────────────────────────────── */
     ::selection { background:rgba(108,99,255,.28); color:inherit; }
     :focus-visible { outline:2px solid #6C63FF; outline-offset:3px; border-radius:4px; }
-    .btn-gold { position:relative; overflow:hidden; }
-    .btn-gold::after { content:''; position:absolute; inset:0; border-radius:50px;
+    /* ✅ AMÉLIORATION 1 — ::after shimmer only (position/overflow already in base styles) */
+    .btn-gold::after,.btn-next::after {
+      content:''; position:absolute; inset:0; border-radius:50px;
       background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
-      transform:translateX(-100%); transition:transform .6s; }
-    .btn-gold:hover::after { transform:translateX(100%); }
-    .btn-next { position:relative; overflow:hidden; }
-    .btn-next::after { content:''; position:absolute; inset:0; border-radius:50px;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
-      transform:translateX(-100%); transition:transform .6s; }
-    .btn-next:hover::after { transform:translateX(100%); }
+      transform:translateX(-100%); transition:transform .6s;
+    }
+    .btn-gold:hover::after,.btn-next:hover::after { transform:translateX(100%); }
 
     /* ─── PAGE TRANSITIONS ───────────────────────────────── */
     @keyframes pageIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
@@ -561,6 +558,21 @@
   .mic-status { color:rgba(232,232,240,0.82) !important; }
   .recap-key { color:rgba(232,232,240,0.6) !important; letter-spacing:.06em; }
   .recap-val { color:#FFFFFF !important; }
+
+  /* ✅ AMÉLIORATION 4 — Genre indicator + âge libre */
+  #genre-indicator {
+    min-height: 24px; padding: 6px 12px; border-radius: 50px;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #age-libre-wrap {
+    background: rgba(108,99,255,.06); border: 1px solid rgba(108,99,255,.2);
+    border-radius: 16px; padding: 20px;
+  }
+  .slider-marks span:last-child { color: #6C63FF; font-weight: 800; }
+  #age-libre { -moz-appearance: textfield; }
+  #age-libre::-webkit-outer-spin-button,
+  #age-libre::-webkit-inner-spin-button { -webkit-appearance: none; }
   </style>
 </head>
 <body>
@@ -696,16 +708,25 @@
         <label class="fl-lbl" for="inp-prenom">Prénom de l'enfant</label>
       </div>
 
-      <!-- Age slider -->
+      <!-- ✅ AMÉLIORATION 3 — Âge slider 2-12 + champ libre 12+ -->
       <div class="slider-wrap">
         <div class="slider-top">
           <span class="slider-label">Âge</span>
           <span class="slider-val" id="age-display">5 <small style="font-size:.8rem;color:var(--muted)">ans</small></span>
         </div>
-        <input class="age-slider" type="range" id="age-slider" min="2" max="12" value="5">
+        <input class="age-slider" type="range" id="age-slider" min="2" max="13" value="5">
         <div class="slider-marks">
-          <span>2 ans</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12 ans</span>
+          <span>2 ans</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span style="color:var(--v);font-weight:700">12+</span>
         </div>
+      </div>
+
+      <!-- Champ libre 12+ (caché par défaut) -->
+      <div id="age-libre-wrap" style="display:none;margin-top:-16px;margin-bottom:28px;animation:sfadein .35s ease;">
+        <div class="fl-wrap">
+          <input class="fl-input" type="number" id="age-libre" placeholder=" " min="13" max="99" value="13">
+          <label class="fl-lbl" for="age-libre">Âge exact (13 ans et plus)</label>
+        </div>
+        <p style="font-size:.78rem;color:rgba(232,232,240,.55);margin-top:-16px;margin-bottom:0;padding-left:4px;">✨ Les histoires s'adaptent à chaque âge, même adulte !</p>
       </div>
 
       <!-- Drag & drop photo -->
@@ -966,8 +987,70 @@ document.querySelectorAll('.btn-next,.btn-gold').forEach(b=>b.addEventListener('
 /* ═══════════════════════════════════════════════════════
    WIZARD STATE
 ═══════════════════════════════════════════════════════ */
-let state = { prenom:'', age:5, photo:null, theme:'', valeur:'', duree:'5', voixBlob:null, voixFile:null };
+let state = { prenom:'', age:5, photo:null, theme:'', valeur:'', duree:'5', voixBlob:null, voixFile:null, genre:'neutre', promptGenre:'' };
 let currentStep = 1;
+
+/* ✅ AMÉLIORATION 2 — Détection de genre sur le prénom */
+const PRENOMS_FILLES = new Set([
+  'emma','léa','chloé','manon','camille','lucie','sarah','inès','alice','jade',
+  'lola','zoé','clara','julia','laura','pauline','anaïs','céline','julie','marie',
+  'sophie','charlotte','océane','clémence','elisa','lisa','eva','nina','rose','ambre',
+  'victoria','mathilde','margot','noemie','noémie','mia','lena','léna','luna',
+  'lilou','lili','amélie','amelia','gabrielle','valentina','yasmine','yasmin',
+  'imane','fatima','khadija','aicha','aisha','sofia','isabelle','natalie','nathalie',
+  'eleanor','eleonore','elise','élise','candice','marion','justine','eléonore',
+  'adele','adèle','salomé','penelope','pénélope','cassandra','cassandre','axelle',
+  'agathe','constance','capucine','gwendoline','gwenaëlle','loïse',
+  'tiphaine','typhaine','albane','sixtine','charline','emeline','eline','angèle',
+  'angele','solene','solène','maeva','maéva','cindy','wendy','sandy','mandy',
+  'alicia','jessica','jennifer','vanessa','melissa','mélissa','sabrina','laetitia',
+  'laëtitia','elodie','élodie','emilie','émilie','aurelie','aurélie','stéphanie',
+  'stephanie','virginie','nathalie','sylvie','sandrine','corinne',
+  'célia','celia','amina','nora','sara','hana','hanna','anna','ana','leila','leïla',
+  'aline','paulina','marina','carolina','alexia','alexiane','alixe','alix',
+  'meï','mei','yuki','sakura','hina','rina'
+]);
+
+const PRENOMS_GARCONS = new Set([
+  'lucas','leo','léo','nathan','thomas','hugo','théo','theo','maxime','antoine',
+  'nicolas','julien','baptiste','pierre','paul','jean','louis','alexandre','alexis',
+  'arthur','adam','ethan','evan','liam','noah','noé','noe','gabriel','raphael',
+  'raphaël','samuel','simon','martin','victor','vincent','romain','quentin','kevin',
+  'jordan','dylan','ryan','tom','tim','tony','max','felix','félix','clément',
+  'clement','axel','thibault','thibaut','florian','florent','benoit','benoît',
+  'matthieu','mathieu','xavier','olivier','sebastien','sébastien','christophe',
+  'guillaume','charles','edouard','francois','françois','henry','henri',
+  'eliot','elliot','robin','tristan','erwan','yann','brieuc','maël','mael',
+  'ewen','corentin','titouan','remi','rémi','dorian','damien','cyril','arnaud',
+  'cédric','cedric','jerome','jérôme','frédéric','frederic','pascal','patrick',
+  'daniel','david','michael','michaël','luca','marco','matteo','lorenzo',
+  'diego','pablo','carlos','miguel','juan','jose','jamal','mehdi','karim',
+  'amine','youssef','omar','ibrahim','hamza','bilal','ilyas','yanis','nolan',
+  'mateo','léon','leon','léandre','leandre','malo','gabin','sacha','sasha',
+  'rayan','nael','naël','loris','mattias','mathias','mathis','loïc','loic',
+  'alan','alain','enzo','kylian','killian','kilian','elio','eliott','sohan',
+  'etienne','bastien','sébastien','ugo','angelo','romeo','roméo','maxence'
+]);
+
+function detecterGenre(prenom) {
+  if (!prenom) return 'neutre';
+  const p = prenom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (PRENOMS_FILLES.has(p)) return 'fille';
+  if (PRENOMS_GARCONS.has(p)) return 'garcon';
+  if (p.endsWith('a') || p.endsWith('ine') || p.endsWith('elle') ||
+      p.endsWith('ette') || p.endsWith('ie') || p.endsWith('ée')) return 'fille';
+  if (p.endsWith('o') || p.endsWith('an') || p.endsWith('en') ||
+      p.endsWith('on') || p.endsWith('in') || p.endsWith('el')) return 'garcon';
+  return 'neutre';
+}
+
+function getPronom(genre) {
+  return {
+    fille:  { sujet:'elle', possessif:'sa', article:'la',    heroine:'héroïne', adj:'courageuse', emoji:'👧' },
+    garcon: { sujet:'il',   possessif:'son', article:'le',   heroine:'héros',   adj:'courageux',  emoji:'👦' },
+    neutre: { sujet:'il/elle', possessif:'son', article:'le/la', heroine:'héros', adj:'courageux', emoji:'🧒' }
+  }[genre];
+}
 const TOTAL = 4;
 
 const progFill  = document.getElementById('pf');
@@ -997,19 +1080,78 @@ const inpPrenom = document.getElementById('inp-prenom');
 const ageSlider = document.getElementById('age-slider');
 const ageDisplay = document.getElementById('age-display');
 
+/* ✅ AMÉLIORATION 2 — Détection genre en temps réel */
 inpPrenom.addEventListener('input', () => {
   state.prenom = inpPrenom.value.trim();
   heroName.textContent = state.prenom || 'votre enfant';
+
+  if (state.prenom.length >= 2) {
+    const genre = detecterGenre(state.prenom);
+    state.genre = genre;
+    const p = getPronom(genre);
+
+    let indicator = document.getElementById('genre-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'genre-indicator';
+      inpPrenom.parentElement.appendChild(indicator);
+    }
+
+    if (genre !== 'neutre') {
+      indicator.innerHTML = `<span style="font-size:1.1rem">${p.emoji}</span>
+        <span style="color:${genre==='fille'?'#FF9ECD':'#9B94FF'}">
+          Détecté : ${genre==='fille'?'Prénom féminin':'Prénom masculin'}
+          — ${state.prenom} sera ${genre==='fille'?'l\'héroïne':'le héros'} de l'histoire
+        </span>`;
+    } else {
+      indicator.innerHTML = `<span style="opacity:.5">🧒 Prénom détecté</span>`;
+    }
+
+    document.querySelectorAll('#hero-name,#gl-name,#rc-prenom').forEach(el => {
+      if (el) el.textContent = state.prenom;
+    });
+
+    state.promptGenre = genre==='fille'
+      ? 'L\'enfant est une fille. Utilise "elle" et les accords féminins.'
+      : genre==='garcon'
+      ? 'L\'enfant est un garçon. Utilise "il" et les accords masculins.'
+      : '';
+  } else {
+    const indicator = document.getElementById('genre-indicator');
+    if (indicator) indicator.innerHTML = '';
+    state.genre = 'neutre'; state.promptGenre = '';
+  }
 });
 
+/* ✅ AMÉLIORATION 3 — Slider étendu avec champ 12+ */
 function updateSlider(val) {
-  state.age = parseInt(val);
-  ageDisplay.innerHTML = val + ' <small style="font-size:.8rem;color:var(--muted)">ans</small>';
-  const pct = (val - 2) / (12 - 2) * 100;
-  ageSlider.style.background = `linear-gradient(to right, var(--v) ${pct}%, rgba(255,255,255,.12) ${pct}%)`;
+  const v = parseInt(val);
+  const agLibreWrap = document.getElementById('age-libre-wrap');
+  const agLibre = document.getElementById('age-libre');
+
+  if (v >= 13) {
+    ageDisplay.innerHTML = '<span style="color:var(--v);font-size:1.2rem">12+</span>';
+    agLibreWrap.style.display = 'block';
+    state.age = parseInt(agLibre.value) || 13;
+    ageSlider.style.background = 'linear-gradient(to right, var(--v) 100%, rgba(255,255,255,.12) 100%)';
+  } else {
+    agLibreWrap.style.display = 'none';
+    state.age = v;
+    ageDisplay.innerHTML = v + ' <small style="font-size:.8rem;color:var(--muted)">ans</small>';
+    const pct = (v - 2) / (12 - 2) * 100;
+    ageSlider.style.background = `linear-gradient(to right, var(--v) ${pct}%, rgba(255,255,255,.12) ${pct}%)`;
+  }
 }
 ageSlider.addEventListener('input', e => updateSlider(e.target.value));
 updateSlider(5);
+
+document.getElementById('age-libre')?.addEventListener('input', e => {
+  const v = parseInt(e.target.value);
+  if (v >= 13 && v <= 99) {
+    state.age = v;
+    ageDisplay.innerHTML = `<span style="color:var(--v)">${v}</span> <small style="font-size:.8rem;color:var(--muted)">ans</small>`;
+  }
+});
 
 /* Drag & drop photo */
 const dnd = document.getElementById('dnd');
@@ -1317,11 +1459,13 @@ async function genererHistoire() {
   // ══════════════════════════════════════════
   /*
   updateLoader('✍️ Écriture de l\'histoire...');
-  const prompt = TINYTALE_CONFIG.ANTHROPIC.PROMPT_TEMPLATE
+  // ✅ AMÉLIORATION 2 — Prompt avec genre détecté
+  const promptAvecGenre = TINYTALE_CONFIG.ANTHROPIC.PROMPT_TEMPLATE
     .replace('{prenom}', state.prenom)
     .replace('{age}',    state.age)
     .replace('{theme}',  state.theme)
-    .replace('{langue}', 'français');
+    .replace('{langue}', 'français')
+    + (state.promptGenre ? '\n' + state.promptGenre : '');
   const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1332,7 +1476,7 @@ async function genererHistoire() {
     body: JSON.stringify({
       model: TINYTALE_CONFIG.ANTHROPIC.MODEL,
       max_tokens: TINYTALE_CONFIG.ANTHROPIC.MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: promptAvecGenre }]
     })
   });
   const claudeData = await claudeResp.json();
