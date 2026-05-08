@@ -351,6 +351,15 @@
     @supports (padding:env(safe-area-inset-bottom)) {
       .auth-right { padding-bottom:max(40px,calc(env(safe-area-inset-bottom)+20px)); }
     }
+
+  /* ══ FIX COLORIMETRIE ══════════════════════════════════════ */
+  .panel-title { color:#1A1A2E !important; font-size:1.7rem !important; }
+  .panel-sub { color:#6B6896 !important; }
+  .tab-btn:not(.active) { color:#6B6896 !important; }
+  .sep { color:#9490BB !important; }
+  .forgot-link { color:#9490BB !important; }
+  .switch-row { color:#9490BB !important; }
+  .cgv-row label { color:#6B6896 !important; }
   </style>
 </head>
 <body>
@@ -393,10 +402,10 @@
     </div>
 
     <div class="left-inner">
-      <a class="left-logo" href="index.html" style="flex-direction:column;gap:16px;">
-        <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 32px rgba(108,99,255,.55);animation:logoFloat 4s ease-in-out infinite;" aria-hidden="true">📖</div>
-        <span style="font-family:'Baloo 2',cursive;font-size:32px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
-      </a>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-bottom:32px;">
+        <div style="width:88px;height:88px;border-radius:24px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 40px rgba(108,99,255,.6);animation:logoFloat 4s ease-in-out infinite;">📖</div>
+        <span style="font-family:'Baloo 2',cursive;font-size:36px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
+      </div>
       <div class="left-tagline">
         Des histoires magiques<br>créées <em>rien que pour</em><br>votre enfant ✨
       </div>
@@ -414,7 +423,7 @@
 
       <!-- Mobile-only logo -->
       <a class="card-logo" href="index.html">
-        <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(108,99,255,.4);" aria-hidden="true">📖</div>
+        <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(108,99,255,.5);">📖</div>
         <span style="font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:#1A1A2E;letter-spacing:-0.5px;">Tiny<span style="color:#6C63FF;">Tale</span></span>
       </a>
 

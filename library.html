@@ -608,6 +608,20 @@
     @supports (padding:env(safe-area-inset-bottom)) {
       main { padding-bottom:max(80px,calc(env(safe-area-inset-bottom)+60px)); }
     }
+
+  /* ══ FIX COLORIMETRIE ══════════════════════════════════════ */
+  .card-title { color:#1A1A2E !important; font-size:1.08rem !important; }
+  .card-meta { color:#7874A0 !important; }
+  .card-progress-label { color:#9490BB !important; font-weight:700 !important; }
+  .card-durée { color:#9490BB !important; font-weight:700 !important; }
+  .card-enfant-badge { color:#1A1A2E !important; font-weight:800 !important; }
+  .nav-tab { color:rgba(255,255,255,0.68) !important; }
+  .nav-tab.active,.nav-tab:hover { color:#FFFFFF !important; }
+  .dd-name { color:#1A1A2E !important; font-weight:800 !important; }
+  .dd-item { color:#1A1A2E !important; }
+  .dd-item.danger { color:#EF4444 !important; }
+  .stat-num { color:#FFD166 !important; }
+  .stat-label { color:rgba(255,255,255,0.82) !important; }
   </style>
 </head>
 <body>
@@ -633,10 +647,10 @@
      NAVBAR
 ═════════════════════════════════════════════ -->
 <nav>
-  <a class="nav-logo" href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
-    <div onmouseover="this.style.transform='rotate(10deg) scale(1.08)'" onmouseout="this.style.transform=''"
-         style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(108,99,255,.4);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0;" aria-hidden="true">📖</div>
-    <span style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:white;letter-spacing:-0.5px;line-height:1;">Tiny<span style="color:#FFD166;">Tale</span></span>
+  <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+    <div onmouseover="this.style.transform='rotate(10deg) scale(1.1)'" onmouseout="this.style.transform=''"
+         style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(108,99,255,.5);transition:transform .3s;flex-shrink:0;">📖</div>
+    <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3);">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
 
   <div class="nav-tabs">

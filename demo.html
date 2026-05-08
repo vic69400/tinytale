@@ -27,7 +27,7 @@
       --v: #6C63FF; --o: #FFD166; --n: #1A1A2E;
       --vl: rgba(108,99,255,.13); --vm: rgba(108,99,255,.28);
       --ol: rgba(255,209,102,.13);
-      --txt: #E8E8F0; --muted: rgba(232,232,240,.6);
+      --txt: #F2F2FA; --muted: rgba(232,232,240,.82);
       --card: rgba(255,255,255,.04); --cb: rgba(108,99,255,.22);
       --r: 20px;
     }
@@ -548,6 +548,17 @@
     @supports (padding:env(safe-area-inset-bottom)) {
       #foot { padding-bottom:max(40px,calc(env(safe-area-inset-bottom)+20px)); }
     }
+
+  /* ══ FIX COLORIMETRIE ══════════════════════════════════════ */
+  .hero-sub,.cta-sub,.ctaf-in p,.how-card p,.wcard p,.fdesc,.ptxt,.ssub,.ttxt { color:rgba(232,232,240,0.85) !important; }
+  .flinks a { color:rgba(232,232,240,0.72) !important; }
+  .flinks a:hover { color:#FFD166 !important; }
+  .fbot p { color:rgba(232,232,240,0.55) !important; }
+  .nav-links a { color:rgba(232,232,240,0.75) !important; }
+  .nav-links a:hover { color:#FFFFFF !important; }
+  .story-p { color:rgba(242,242,250,0.92) !important; line-height:1.95 !important; }
+  .story-p strong { color:#FFD166 !important; }
+  .story-p.moral { color:#FFD166 !important; }
   </style>
 </head>
 <body>
@@ -560,10 +571,10 @@
 
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
-  <a href="index.html" class="nav-logo" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
-    <div onmouseover="this.style.transform='rotate(10deg) scale(1.08)'" onmouseout="this.style.transform=''"
-         style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(108,99,255,.4);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0;" aria-hidden="true">📖</div>
-    <span style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:white;letter-spacing:-0.5px;line-height:1;">Tiny<span style="color:#FFD166;">Tale</span></span>
+  <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+    <div onmouseover="this.style.transform='rotate(10deg) scale(1.1)'" onmouseout="this.style.transform=''"
+         style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(108,99,255,.5);transition:transform .3s;flex-shrink:0;">📖</div>
+    <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3);">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Accueil</a></li>
@@ -864,9 +875,9 @@
   <div class="fi">
     <div class="ftop">
       <div class="fbrand">
-        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
-          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(108,99,255,.4);" aria-hidden="true">📖</div>
-          <span style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:white;letter-spacing:-0.5px;">Tiny<span style="color:#FFD166;">Tale</span></span>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">
+          <div style="width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 24px rgba(108,99,255,.5);">📖</div>
+          <span style="font-family:'Baloo 2',cursive;font-size:28px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
         </div>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans.</p>
         <div class="fsocial">
