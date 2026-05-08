@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Écoutez un exemple d'histoire TinyTale – personnalisée, narrée et illustrée par IA.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="TinyTale">
+  <meta name="theme-color" content="#6C63FF">
+  <meta property="og:title" content="Histoire personnalisée – TinyTale">
+  <meta property="og:description" content="Écoutez un exemple d'histoire magique créée par IA pour un enfant.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tinytale.org/demo.html">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
   <title>Démo histoire – TinyTale</title>
   <script src="config.js"></script>
   <!-- ✅ FIX CORRECTION 2 — Firebase compat SDK -->
@@ -483,9 +492,67 @@
     @media (min-width:1440px) {
       #foot { padding:80px 64px 40px; }
     }
+
+    /* ─── MICRO-INTERACTIONS ─────────────────────────────── */
+    ::selection { background:rgba(108,99,255,.28); color:inherit; }
+    :focus-visible { outline:2px solid #6C63FF; outline-offset:3px; border-radius:4px; }
+    .btn-gold { position:relative; overflow:hidden; }
+    .btn-gold::after { content:''; position:absolute; inset:0; border-radius:50px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
+      transform:translateX(-100%); transition:transform .6s; }
+    .btn-gold:hover::after { transform:translateX(100%); }
+
+    /* ─── PAGE TRANSITIONS ───────────────────────────────── */
+    @keyframes pageIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes pageOut { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-10px)} }
+    body { animation:pageIn .42s cubic-bezier(.4,0,.2,1) both; }
+    body.page-exit { animation:pageOut .28s ease forwards !important; }
+
+    /* ─── SKIP LINK ──────────────────────────────────────── */
+    .skip-link {
+      position:absolute; top:-44px; left:16px; z-index:20000;
+      background:#6C63FF; color:#fff; padding:9px 18px; border-radius:8px;
+      font-weight:700; font-size:.88rem; transition:top .2s; text-decoration:none;
+    }
+    .skip-link:focus { top:12px; }
+
+    /* ─── PREMIUM TOAST ──────────────────────────────────── */
+    #toast-container {
+      position:fixed; top:22px; right:22px; z-index:20000;
+      display:flex; flex-direction:column; gap:10px; pointer-events:none;
+    }
+    .t-toast {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 20px; border-radius:14px;
+      min-width:260px; max-width:380px;
+      font-size:.88rem; font-weight:600;
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.07);
+      animation:toastIn .35s cubic-bezier(.4,0,.2,1);
+      pointer-events:all; cursor:pointer;
+    }
+    .t-toast.t-exit { animation:toastOut .28s ease forwards; pointer-events:none; }
+    .t-toast.success { background:rgba(34,197,94,.18); color:#4ade80; border:1px solid rgba(34,197,94,.28); }
+    .t-toast.error   { background:rgba(239,68,68,.18);  color:#f87171; border:1px solid rgba(239,68,68,.28); }
+    .t-toast.info    { background:rgba(108,99,255,.22); color:#a5b4fc; border:1px solid rgba(108,99,255,.35); }
+    .t-toast.warning { background:rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.28); }
+    @keyframes toastIn  { from{transform:translateX(80px) scale(.92);opacity:0} to{transform:none;opacity:1} }
+    @keyframes toastOut { from{opacity:1;transform:none} to{opacity:0;transform:translateX(60px) scale(.92)} }
+
+    /* ─── MOBILE TOUCH PREMIUM ───────────────────────────── */
+    @media (hover:none) {
+      a,button,[onclick] { touch-action:manipulation; }
+      button,.btn-gold,.play-btn,.ctrl-btn { min-height:44px; }
+      .btn-gold:hover { transform:none !important; }
+    }
+    @supports (padding:env(safe-area-inset-bottom)) {
+      #foot { padding-bottom:max(40px,calc(env(safe-area-inset-bottom)+20px)); }
+    }
   </style>
 </head>
 <body>
+<a class="skip-link" href="#hero">Aller au contenu principal</a>
+<div id="toast-container"></div>
 
 <div id="sp"></div>
 <div id="cd"></div>
@@ -493,9 +560,10 @@
 
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
-  <a href="index.html" class="nav-logo">
-    <img src="logo.png" height="44" alt="TinyTale" style="mix-blend-mode:screen;"> <!-- ✅ AMÉLIORATION 3 -->
-    <span>Tiny<span class="vt">Tale</span></span>
+  <a href="index.html" class="nav-logo" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+    <div onmouseover="this.style.transform='rotate(10deg) scale(1.08)'" onmouseout="this.style.transform=''"
+         style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(108,99,255,.4);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0;" aria-hidden="true">📖</div>
+    <span style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:white;letter-spacing:-0.5px;line-height:1;">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
   <ul class="nav-links">
     <li><a href="index.html">Accueil</a></li>
@@ -531,8 +599,8 @@
 </div>
 
 <!-- ══ 1. HERO ════════════════════════════════════════════ -->
-<section id="hero">
-  <canvas id="hcvs"></canvas>
+<section id="hero" role="main">
+  <canvas id="hcvs" aria-hidden="true"></canvas>
 
   <div class="hero-in">
     <div class="hero-badge">
@@ -582,9 +650,9 @@
 
       <!-- Controls -->
       <div class="player-controls">
-        <button class="ctrl-btn" id="btn-prev" title="Début" aria-label="Revenir au début">⏮</button>
+        <button class="ctrl-btn" id="btn-prev" title="Reculer 15s" aria-label="Reculer de 15 secondes">⏪<span style="display:block;font-size:9px;font-family:'Nunito',sans-serif;line-height:1;margin-top:2px;">−15s</span></button>
         <button class="play-btn" id="btn-play" aria-label="Lecture / Pause">▶</button>
-        <button class="ctrl-btn" id="btn-next" title="Fin" aria-label="Aller à la fin">⏭</button>
+        <button class="ctrl-btn" id="btn-next" title="Avancer 15s" aria-label="Avancer de 15 secondes">⏩<span style="display:block;font-size:9px;font-family:'Nunito',sans-serif;line-height:1;margin-top:2px;">+15s</span></button>
       </div>
 
       <!-- Progress -->
@@ -597,11 +665,16 @@
       </div>
       <div class="player-times">
         <span id="time-cur">0:00</span>
-        <span>4:32</span>
+        <span id="time-total">4:32</span>
       </div>
     </div>
   </div>
 </section>
+
+<!-- ✅ AMÉLIORATION 5 — Real audio element with fallback simulation -->
+<audio id="story-audio" preload="auto">
+  <source src="audio-demo.mp3" type="audio/mpeg">
+</audio>
 
 <!-- ══ 3. STORY TEXT ══════════════════════════════════════ -->
 <section id="story-section">
@@ -791,10 +864,10 @@
   <div class="fi">
     <div class="ftop">
       <div class="fbrand">
-        <a href="index.html" class="nav-logo">
-          <img src="logo.png" height="34" alt="TinyTale" style="mix-blend-mode:screen;"> <!-- ✅ AMÉLIORATION 3 -->
-          <span>Tiny<span class="vt">Tale</span></span>
-        </a>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(108,99,255,.4);" aria-hidden="true">📖</div>
+          <span style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:white;letter-spacing:-0.5px;">Tiny<span style="color:#FFD166;">Tale</span></span>
+        </div>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans.</p>
         <div class="fsocial">
           <a href="#" class="fsoc" aria-label="Instagram">📷</a>
@@ -985,9 +1058,37 @@ function setPlaying(val){
   }
 }
 
-document.getElementById('btn-play').addEventListener('click', ()=>setPlaying(!playing));
-document.getElementById('btn-prev').addEventListener('click', ()=>{ currentTime=0; updateUI(); if(playing){clearInterval(playInterval);setPlaying(true);} });
-document.getElementById('btn-next').addEventListener('click', ()=>{ currentTime=DURATION; setPlaying(false); updateUI(); });
+/* ✅ AMÉLIORATION 5 — Real audio element with ±15s seek + fallback simulation */
+const storyAudio = document.getElementById('story-audio');
+
+document.getElementById('btn-play').addEventListener('click', ()=>{
+  if(storyAudio.readyState >= 2){
+    if(storyAudio.paused){ storyAudio.play(); setPlaying(true); }
+    else { storyAudio.pause(); setPlaying(false); }
+  } else {
+    setPlaying(!playing);
+  }
+});
+document.getElementById('btn-prev').addEventListener('click', ()=>{
+  if(storyAudio.readyState >= 2){ storyAudio.currentTime = Math.max(0, storyAudio.currentTime - 15); }
+  else { currentTime = Math.max(0, currentTime - 15); updateUI(); }
+});
+document.getElementById('btn-next').addEventListener('click', ()=>{
+  if(storyAudio.readyState >= 2){ storyAudio.currentTime = Math.min(storyAudio.duration, storyAudio.currentTime + 15); }
+  else { currentTime = Math.min(DURATION, currentTime + 15); updateUI(); }
+});
+
+storyAudio.addEventListener('timeupdate', ()=>{
+  if(!storyAudio.duration) return;
+  currentTime = storyAudio.currentTime;
+  const tot = storyAudio.duration || DURATION;
+  document.getElementById('prog-fill').style.width = (currentTime/tot*100)+'%';
+  document.getElementById('time-cur').textContent = fmtTime(currentTime);
+  document.getElementById('time-total').textContent = fmtTime(tot);
+});
+storyAudio.addEventListener('ended', ()=>{ setPlaying(false); currentTime=0; updateUI(); });
+storyAudio.addEventListener('play',  ()=>setPlaying(true));
+storyAudio.addEventListener('pause', ()=>setPlaying(false));
 
 /* Click on progress bar */
 document.getElementById('prog-bg').addEventListener('click', e=>{
@@ -1034,6 +1135,31 @@ try {
     }
   });
 } catch(e) { console.warn('Firebase demo:', e); }
+
+/* ✅ AMÉLIORATION 6 — Toast notifications premium */
+window.showToast = function(type, msg, dur=3500) {
+  const tc = document.getElementById('toast-container');
+  if (!tc) return;
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `t-toast ${type}`;
+  el.innerHTML = `<span style="font-size:18px">${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button onclick="this.parentElement.classList.add('t-exit');this.parentElement.addEventListener('animationend',()=>this.parentElement.remove(),{once:true})" style="background:transparent;border:none;cursor:pointer;color:inherit;font-size:15px;opacity:.6;margin-left:8px;padding:0;">✕</button>`;
+  tc.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode){ el.classList.add('t-exit'); el.addEventListener('animationend',()=>el.remove(),{once:true}); }}, dur);
+};
+
+/* ✅ AMÉLIORATION 7 — Page transitions */
+(function(){
+  document.querySelectorAll('a[href]').forEach(a=>{
+    const href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('http')||href.startsWith('//')) return;
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      document.body.classList.add('page-exit');
+      setTimeout(()=>{ window.location.href=href; },290);
+    });
+  });
+})();
 </script>
 </body>
 </html>

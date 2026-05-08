@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Connectez-vous ou créez votre compte TinyTale pour accéder à vos histoires magiques.">
+  <meta name="robots" content="noindex, follow">
+  <meta name="author" content="TinyTale">
+  <meta name="theme-color" content="#6C63FF">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
   <title>Connexion — TinyTale</title>
   <!-- ✅ FIX CORRECTION 3 — config.js premier, Firebase ensuite -->
   <script src="config.js"></script>
@@ -306,9 +311,50 @@
       .auth-card  { padding: 32px 24px; }
       .card-logo  { display: flex; }
     }
+
+    /* ─── MICRO-INTERACTIONS ─────────────────────────────── */
+    ::selection { background:rgba(108,99,255,.2); color:inherit; }
+    :focus-visible { outline:2px solid var(--purple); outline-offset:3px; border-radius:4px; }
+    .btn-primary { position:relative; overflow:hidden; }
+    .btn-primary::after { content:''; position:absolute; inset:0; border-radius:12px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+      transform:translateX(-100%); transition:transform .6s; }
+    .btn-primary:hover::after { transform:translateX(100%); }
+    .btn-gold { position:relative; overflow:hidden; }
+    .btn-gold::after { content:''; position:absolute; inset:0; border-radius:12px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
+      transform:translateX(-100%); transition:transform .6s; }
+    .btn-gold:hover::after { transform:translateX(100%); }
+
+    /* ─── LOGO FLOAT ANIMATION ───────────────────────────── */
+    @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+    /* ─── PAGE TRANSITIONS ───────────────────────────────── */
+    @keyframes pageIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes pageOut { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-10px)} }
+    body { animation:pageIn .42s cubic-bezier(.4,0,.2,1) both; }
+    body.page-exit { animation:pageOut .28s ease forwards !important; }
+
+    /* ─── SKIP LINK ──────────────────────────────────────── */
+    .skip-link {
+      position:absolute; top:-44px; left:16px; z-index:20000;
+      background:var(--purple); color:#fff; padding:9px 18px; border-radius:8px;
+      font-weight:700; font-size:.88rem; transition:top .2s; text-decoration:none;
+    }
+    .skip-link:focus { top:12px; }
+
+    /* ─── MOBILE TOUCH PREMIUM ───────────────────────────── */
+    @media (hover:none) {
+      a,button,[onclick] { touch-action:manipulation; }
+      button,.btn-primary,.btn-gold,.btn-google { min-height:44px; }
+    }
+    @supports (padding:env(safe-area-inset-bottom)) {
+      .auth-right { padding-bottom:max(40px,calc(env(safe-area-inset-bottom)+20px)); }
+    }
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">Aller au contenu principal</a>
 
 <!-- ── TOASTS ─────────────────────────────────────────── -->
 <div id="tc"></div>
@@ -347,11 +393,9 @@
     </div>
 
     <div class="left-inner">
-      <a class="left-logo" href="index.html">
-        <div style="display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:16px;">
-          <span style="font-size:40px;">📖</span>
-          <span style="font-family:'Baloo 2',cursive; font-size:32px; font-weight:800; color:white; letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
-        </div>
+      <a class="left-logo" href="index.html" style="flex-direction:column;gap:16px;">
+        <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 32px rgba(108,99,255,.55);animation:logoFloat 4s ease-in-out infinite;" aria-hidden="true">📖</div>
+        <span style="font-family:'Baloo 2',cursive;font-size:32px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
       </a>
       <div class="left-tagline">
         Des histoires magiques<br>créées <em>rien que pour</em><br>votre enfant ✨
@@ -370,8 +414,8 @@
 
       <!-- Mobile-only logo -->
       <a class="card-logo" href="index.html">
-        <span style="font-size:22px;">📖</span>
-        <span style="font-family:'Baloo 2',cursive; font-size:18px; font-weight:800; color:#1A1A2E;">Tiny<span style="color:#6C63FF;">Tale</span></span>
+        <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(108,99,255,.4);" aria-hidden="true">📖</div>
+        <span style="font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:#1A1A2E;letter-spacing:-0.5px;">Tiny<span style="color:#6C63FF;">Tale</span></span>
       </a>
 
       <!-- Tab pill toggle -->
@@ -756,6 +800,19 @@ document.addEventListener('keydown', e => {
   if (currentTab === 'login')  doLogin();
   if (currentTab === 'signup') doSignup();
 });
+
+/* ✅ AMÉLIORATION 7 — Page transitions */
+(function(){
+  document.querySelectorAll('a[href]').forEach(a=>{
+    const href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('http')||href.startsWith('//')) return;
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      document.body.classList.add('page-exit');
+      setTimeout(()=>{ window.location.href=href; },290);
+    });
+  });
+})();
 </script>
 </body>
 </html>

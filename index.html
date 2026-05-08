@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="TinyTale – Histoires personnalisées, narrées et illustrées pour vos enfants. Créées par IA en 30 secondes.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="TinyTale">
+  <meta name="theme-color" content="#6C63FF">
+  <meta property="og:title" content="TinyTale – Histoires magiques personnalisées pour enfants">
+  <meta property="og:description" content="Créez en 30 secondes une histoire unique, narrée et illustrée, pour l'enfant de votre vie.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tinytale.org">
+  <meta property="og:image" content="https://tinytale.org/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TinyTale – Histoires magiques pour enfants">
+  <meta name="twitter:description" content="Créez en 30 secondes une histoire unique, narrée et illustrée pour votre enfant.">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
   <title>TinyTale – Histoires magiques personnalisées pour enfants</title>
   <script src="config.js"></script>
   <!-- ✅ FIX BUG 3 & 9 — Firebase compat SDK -->
@@ -12,6 +24,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"TinyTale","url":"https://tinytale.org","description":"Histoires personnalisées, narrées et illustrées pour enfants de 2 à 10 ans","applicationCategory":"EducationalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"author":{"@type":"Organization","name":"TinyTale"}}
+  </script>
   <style>
     /* ─── RESET & VARIABLES ─────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -686,9 +701,72 @@
       section { padding:112px 64px; }
       #nav, #nav.scrolled { padding-left:64px; padding-right:64px; }
     }
+
+    /* ─── MICRO-INTERACTIONS ─────────────────────────────── */
+    ::selection { background: rgba(108,99,255,.28); color: inherit; }
+    :focus-visible { outline: 2px solid #6C63FF; outline-offset: 3px; border-radius: 4px; }
+    .btn-gold::after { content:''; position:absolute; inset:0; border-radius:50px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);
+      transform:translateX(-100%); transition:transform .6s; }
+    .btn-gold:hover::after { transform:translateX(100%); }
+    .text-gradient-animated {
+      background:linear-gradient(90deg,var(--v),var(--o),var(--v)); background-size:200% auto;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+      animation:gradMove 3s linear infinite;
+    }
+    @keyframes gradMove { to { background-position:200% center; } }
+
+    /* ─── PAGE TRANSITIONS ───────────────────────────────── */
+    @keyframes pageIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes pageOut { from{opacity:1;transform:none} to{opacity:0;transform:translateY(-10px)} }
+    body { animation: pageIn .42s cubic-bezier(.4,0,.2,1) both; }
+    body.page-exit { animation: pageOut .28s ease forwards !important; }
+
+    /* ─── SKIP LINK ──────────────────────────────────────── */
+    .skip-link {
+      position:absolute; top:-44px; left:16px; z-index:20000;
+      background:var(--v); color:#fff; padding:9px 18px; border-radius:8px;
+      font-weight:700; font-size:.88rem; transition:top .2s; text-decoration:none;
+    }
+    .skip-link:focus { top:12px; }
+
+    /* ─── PREMIUM TOAST ──────────────────────────────────── */
+    #toast-container {
+      position:fixed; top:22px; right:22px; z-index:20000;
+      display:flex; flex-direction:column; gap:10px; pointer-events:none;
+    }
+    .t-toast {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 20px; border-radius:14px;
+      min-width:260px; max-width:380px;
+      font-size:.88rem; font-weight:600;
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.07);
+      animation:toastIn .35s cubic-bezier(.4,0,.2,1);
+      pointer-events:all; cursor:pointer;
+    }
+    .t-toast.t-exit { animation:toastOut .28s ease forwards; pointer-events:none; }
+    .t-toast.success { background:rgba(34,197,94,.18); color:#4ade80; border:1px solid rgba(34,197,94,.28); }
+    .t-toast.error   { background:rgba(239,68,68,.18);  color:#f87171; border:1px solid rgba(239,68,68,.28); }
+    .t-toast.info    { background:rgba(108,99,255,.22); color:#a5b4fc; border:1px solid rgba(108,99,255,.35); }
+    .t-toast.warning { background:rgba(245,158,11,.18); color:#fbbf24; border:1px solid rgba(245,158,11,.28); }
+    @keyframes toastIn  { from{transform:translateX(80px) scale(.92);opacity:0} to{transform:none;opacity:1} }
+    @keyframes toastOut { from{opacity:1;transform:none} to{opacity:0;transform:translateX(60px) scale(.92)} }
+
+    /* ─── MOBILE TOUCH PREMIUM ───────────────────────────── */
+    @media (hover:none) {
+      a,button,[onclick] { touch-action:manipulation; }
+      button,.btn-gold,.btn-p,.btn-s,.pbtn,.nav-login-btn { min-height:44px; }
+      .btn-gold:hover,.btn-p:hover,.btn-s:hover { transform:none !important; }
+    }
+    @supports (padding:env(safe-area-inset-bottom)) {
+      #foot { padding-bottom:max(40px,calc(env(safe-area-inset-bottom)+20px)); }
+    }
   </style>
 </head>
 <body>
+<a class="skip-link" href="#hero">Aller au contenu principal</a>
+<div id="toast-container"></div>
 
 <!-- scroll progress -->
 <div id="sp"></div>
@@ -700,19 +778,19 @@
 <!-- ══ 1. LOADER ══════════════════════════════════════════ -->
 <div id="loader">
   <div class="ld-logo">
-    <span style="font-size:24px;">📖</span>
-    <span style="font-family:'Baloo 2',cursive; font-weight:800; color:white;">Tiny<span style="color:#FFD166;">Tale</span></span>
+    <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 28px rgba(108,99,255,.5);" aria-hidden="true">📖</div>
+    <span style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:800; color:white;">Tiny<span style="color:#FFD166;">Tale</span></span>
   </div>
   <div class="ld-track"><div class="ld-bar"></div></div>
   <p class="ld-txt">Préparation des histoires magiques…</p>
 </div>
 
 <!-- ══ 3. NAVBAR ══════════════════════════════════════════ -->
-<nav id="nav">
-  <a href="index.html" class="nav-logo"
-     style="display:flex; align-items:center; gap:8px; text-decoration:none;">
-    <span style="font-size:28px; line-height:1;">📖</span>
-    <span style="font-family:'Baloo 2',cursive; font-size:22px; font-weight:800; color:white; letter-spacing:-0.5px; line-height:1;">Tiny<span style="color:#FFD166;">Tale</span></span>
+<nav id="nav" role="navigation" aria-label="Navigation principale">
+  <a href="index.html" class="nav-logo" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+    <div onmouseover="this.style.transform='rotate(10deg) scale(1.08)'" onmouseout="this.style.transform=''"
+         style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px rgba(108,99,255,.4);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0;" aria-hidden="true">📖</div>
+    <span style="font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:white;letter-spacing:-0.5px;line-height:1;">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
   <ul class="nav-links">
     <li><a href="#how">Comment ça marche</a></li>
@@ -751,8 +829,8 @@
 </div>
 
 <!-- ══ 4. HERO ════════════════════════════════════════════ -->
-<section id="hero">
-  <canvas id="hcanvas"></canvas>
+<section id="hero" role="main">
+  <canvas id="hcanvas" aria-hidden="true"></canvas>
   <div class="hero-inner">
     <div>
       <div class="hero-badge">✨ 1ère histoire GRATUITE</div>
@@ -1105,7 +1183,7 @@
 </section>
 
 <!-- ══ 11. FOOTER ════════════════════════════════════════ -->
-<footer id="foot">
+<footer id="foot" role="contentinfo">
   <div class="fwave">
     <svg viewBox="0 0 1440 72" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
       <path d="M0 72 L0 36 Q240 0 480 24 Q720 48 960 20 Q1200 0 1440 32 L1440 72 Z" fill="#1A1A2E"/>
@@ -1114,9 +1192,9 @@
   <div class="fi">
     <div class="ftop">
       <div class="fbrand">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <span style="font-size:24px;">📖</span>
-          <span style="font-family:'Baloo 2',cursive; font-size:28px; font-weight:800; color:white; letter-spacing:-0.5px;">Tiny<span style="color:#FFD166;">Tale</span></span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(108,99,255,.4);" aria-hidden="true">📖</div>
+          <span style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:white;letter-spacing:-0.5px;">Tiny<span style="color:#FFD166;">Tale</span></span>
         </div>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans. La magie de la lecture au bout des doigts.</p>
         <div class="fsocial">
@@ -1481,6 +1559,31 @@ tt.addEventListener('touchend', e => {
   window.signOutUser = function() {
     auth.signOut().then(() => { window.location.href = 'index.html'; });
   };
+})();
+
+/* ✅ AMÉLIORATION 6 — Toast notifications premium */
+window.showToast = function(type, msg, dur=3500) {
+  const tc = document.getElementById('toast-container');
+  if (!tc) return;
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `t-toast ${type}`;
+  el.innerHTML = `<span style="font-size:18px">${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button onclick="this.parentElement.classList.add('t-exit');this.parentElement.addEventListener('animationend',()=>this.parentElement.remove(),{once:true})" style="background:transparent;border:none;cursor:pointer;color:inherit;font-size:15px;opacity:.6;margin-left:8px;padding:0;">✕</button>`;
+  tc.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode){ el.classList.add('t-exit'); el.addEventListener('animationend',()=>el.remove(),{once:true}); }}, dur);
+};
+
+/* ✅ AMÉLIORATION 7 — Page transitions */
+(function(){
+  document.querySelectorAll('a[href]').forEach(a=>{
+    const href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('http')||href.startsWith('//')) return;
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      document.body.classList.add('page-exit');
+      setTimeout(()=>{ window.location.href=href; },290);
+    });
+  });
 })();
 </script>
 </body>
