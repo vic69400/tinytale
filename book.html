@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Lisez votre histoire TinyTale – livre interactif illustré et narré.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#6C63FF">
+  <title>Votre histoire – TinyTale</title>
+  <script src="config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & VARIABLES ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --v: #6C63FF; --o: #FFD166; --n: #1A1A2E;
+      --vl: rgba(108,99,255,.13); --vm: rgba(108,99,255,.28);
+      --txt: #F2F2FA; --muted: rgba(232,232,240,.82);
+      --r: 18px;
+    }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--n); color: var(--txt);
+      display: flex; flex-direction: column;
+      cursor: none;
+    }
+    h1,h2,h3 { font-family: 'Baloo 2', cursive; }
+    @media (hover:none) { body { cursor: auto; } }
+
+    /* ── CURSOR ── */
+    #cd,#cr {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; transform: translate(-50%,-50%); z-index: 99999;
+    }
+    #cd { width:8px; height:8px; background:var(--v); z-index:100001; transition:background .2s,transform .15s; }
+    #cr { width:40px; height:40px; border:2px solid rgba(108,99,255,.55); z-index:100000; transition:width .3s,height .3s,border-color .3s; }
+    body.ch #cd { background:var(--o); transform:translate(-50%,-50%) scale(1.5); }
+    body.ch #cr { width:56px; height:56px; border-color:rgba(255,209,102,.45); }
+    @media (hover:none) { #cd,#cr { display:none; } }
+
+    /* ── STARRY CANVAS ── */
+    #stars-bg {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── BOOK LOADER ── */
+    #book-loader {
+      position: fixed; inset: 0; z-index: 9000;
+      background: var(--n);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 24px;
+      transition: opacity .6s ease, visibility .6s;
+    }
+    #book-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-book {
+      width: 64px; height: 80px;
+      position: relative;
+      animation: loaderBounce 1.2s ease-in-out infinite;
+    }
+    .loader-book::before {
+      content: '📖';
+      font-size: 64px;
+      line-height: 1;
+    }
+    @keyframes loaderBounce {
+      0%,100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-14px) rotate(3deg); }
+    }
+    .loader-text {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--muted);
+      animation: loaderPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes loaderPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+    .loader-bar-wrap {
+      width: 200px; height: 4px;
+      background: rgba(255,255,255,.1); border-radius: 4px; overflow: hidden;
+    }
+    .loader-bar {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      animation: loaderBar 1.8s ease-in-out infinite;
+    }
+    @keyframes loaderBar { 0%{width:0%} 60%{width:90%} 100%{width:100%} }
+
+    /* ── TOP BAR ── */
+    #top-bar {
+      position: relative; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(26,26,46,.85); backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(108,99,255,.2);
+      flex-shrink: 0;
+    }
+    .tb-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Baloo 2', cursive; font-size: 1.35rem; font-weight: 800;
+      text-decoration: none; color: var(--txt);
+    }
+    .tb-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg,#6C63FF,#9B94FF);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .tb-logo .vt { color: var(--v); }
+    #story-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(.8rem, 2vw, 1.1rem);
+      font-weight: 700; color: var(--muted);
+      max-width: 40%; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+      text-align: center;
+    }
+    .tb-actions { display: flex; align-items: center; gap: 10px; }
+    .tb-btn {
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 1px solid rgba(108,99,255,.3);
+      background: rgba(108,99,255,.12);
+      color: var(--txt); font-size: 17px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .2s, transform .15s;
+    }
+    .tb-btn:hover { background: rgba(108,99,255,.28); transform: scale(1.05); }
+
+    /* ── BOOK SCENE ── */
+    #book-scene {
+      flex: 1; position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ── 3D BOOK CONTAINER ── */
+    #book-container {
+      perspective: 2000px;
+      width: min(560px, 88vw);
+      height: min(400px, 62vh);
+      position: relative;
+    }
+    #book {
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+    /* Spine/binding */
+    #book::before {
+      content: '';
+      position: absolute;
+      left: 50%; top: 0; bottom: 0;
+      width: 28px;
+      transform: translateX(-50%) translateZ(2px);
+      background: linear-gradient(180deg,#2a1a4e,#1a0e3a,#2a1a4e);
+      box-shadow: 0 0 32px rgba(108,99,255,.55), 0 0 8px rgba(108,99,255,.3);
+      border-radius: 3px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* ── PAGE ── */
+    .page {
+      position: absolute; top: 0; bottom: 0;
+      width: 50%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.645,0.045,0.355,1.000);
+      border-radius: 4px;
+    }
+    /* Right pages (odd) — flip from right */
+    .page.right { right: 0; transform-origin: left center; }
+    /* Left pages (even) — flip from left */
+    .page.left  { left: 0;  transform-origin: right center; }
+
+    .page.turned.right { transform: rotateY(-180deg); }
+    .page.turned.left  { transform: rotateY(180deg); }
+
+    .page-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .page-front { transform: rotateY(0deg); }
+    .page-back  { transform: rotateY(180deg); }
+
+    /* ── SPREAD LAYOUT ── */
+    .spread-left, .spread-right {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Cover spread */
+    .spread-cover {
+      background: linear-gradient(145deg,#1a0e3a 0%,#2d1b69 50%,#1a1a2e 100%);
+    }
+    /* Text pages */
+    .spread-text {
+      background: linear-gradient(160deg,#0f0a1e 0%,#1a1031 100%);
+      padding: 28px 22px 22px;
+      justify-content: flex-start;
+    }
+    /* Illustration pages */
+    .spread-illus {
+      background: #0a0618;
+      padding: 0;
+    }
+    /* Back cover */
+    .spread-back {
+      background: linear-gradient(145deg,#1a0e3a,#2d1b69,#1a0e3a);
+    }
+
+    /* Cover content */
+    .cover-stars { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .cover-star {
+      position: absolute; border-radius: 50%;
+      background: white; animation: coverTwinkle var(--d,2s) ease-in-out infinite var(--delay,0s);
+    }
+    @keyframes coverTwinkle { 0%,100%{opacity:.2} 50%{opacity:.9} }
+    .cover-hero { font-size: clamp(2.5rem,7vw,4.5rem); margin-bottom: 8px; animation: heroFloat 3s ease-in-out infinite; }
+    @keyframes heroFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .cover-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(.9rem,2.5vw,1.5rem);
+      font-weight: 800; text-align: center;
+      line-height: 1.3; color: var(--o);
+      text-shadow: 0 2px 20px rgba(255,209,102,.5);
+      padding: 0 16px;
+      margin-bottom: 12px;
+    }
+    .cover-sub {
+      font-size: clamp(.65rem,1.5vw,.9rem);
+      color: var(--muted); text-align: center;
+      font-weight: 600;
+    }
+    .cover-badge {
+      position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: rgba(108,99,255,.25); border: 1px solid rgba(108,99,255,.4);
+      border-radius: 50px; padding: 5px 14px;
+      font-size: .7rem; font-weight: 700;
+      color: var(--v); letter-spacing: .08em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .cover-page-num {
+      position: absolute; bottom: 10px; right: 14px;
+      font-size: .62rem; color: rgba(255,255,255,.25);
+      font-weight: 600;
+    }
+
+    /* Text page content */
+    .page-chapter {
+      font-size: .65rem; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--v); margin-bottom: 12px;
+    }
+    .page-text {
+      font-size: clamp(.72rem, 1.6vw, .95rem);
+      line-height: 1.8; color: var(--txt);
+      font-weight: 600; flex: 1;
+    }
+    .page-text em { color: var(--o); font-style: normal; font-weight: 800; }
+    .page-num {
+      font-size: .62rem; color: rgba(255,255,255,.25);
+      font-weight: 600; align-self: flex-end; margin-top: 10px;
+    }
+
+    /* Illustration page content */
+    .page-illus {
+      width: 100%; height: 100%; overflow: hidden; position: relative;
+    }
+    .page-illus img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 8s ease;
+      transform: scale(1);
+    }
+    .page-illus.active img { transform: scale(1.08); }
+    .page-illus-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(10,6,24,.85));
+      padding: 20px 14px 10px;
+      font-size: .7rem; font-weight: 700;
+      color: var(--muted); text-align: center;
+    }
+    .page-illus-emoji {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(4rem,12vw,8rem);
+      background: linear-gradient(145deg,#0f0620,#1a0e3a);
+    }
+
+    /* Back cover */
+    .back-cover-inner {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; padding: 24px; text-align: center; height: 100%;
+    }
+    .back-logo-icon {
+      width: 54px; height: 54px; border-radius: 14px;
+      background: linear-gradient(135deg,#6C63FF,#9B94FF);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 8px 32px rgba(108,99,255,.4);
+    }
+    .back-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.1rem; font-weight: 800; color: var(--o);
+    }
+    .back-msg {
+      font-size: .8rem; color: var(--muted);
+      line-height: 1.6; max-width: 180px;
+    }
+    .back-replay-btn {
+      background: linear-gradient(135deg,var(--v),#9B94FF);
+      border: none; border-radius: 50px;
+      padding: 9px 22px; color: #fff;
+      font-family: 'Baloo 2', cursive; font-size: .85rem; font-weight: 700;
+      cursor: pointer; transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(108,99,255,.4);
+    }
+    .back-replay-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,.55); }
+    .back-home-btn {
+      background: transparent; border: 1px solid rgba(108,99,255,.4);
+      border-radius: 50px; padding: 7px 18px; color: var(--muted);
+      font-family: 'Nunito', sans-serif; font-size: .8rem; font-weight: 700;
+      cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .back-home-btn:hover { border-color: var(--v); color: var(--txt); }
+
+    /* ── NAV ARROWS ── */
+    #btn-prev, #btn-next {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 1px solid rgba(108,99,255,.35);
+      background: rgba(26,26,46,.75); backdrop-filter: blur(12px);
+      color: var(--txt); font-size: 22px; font-weight: 700;
+      cursor: pointer; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .2s, opacity .2s;
+    }
+    #btn-prev { left: 10px; }
+    #btn-next { right: 10px; }
+    #btn-prev:hover, #btn-next:hover { background: rgba(108,99,255,.35); transform: translateY(-50%) scale(1.08); }
+    #btn-prev:disabled, #btn-next:disabled { opacity: .25; pointer-events: none; }
+
+    /* ── PAGE DOTS ── */
+    #page-dots {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 7px; z-index: 50;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.1);
+      transition: background .3s, transform .3s;
+      cursor: pointer;
+    }
+    .dot.active {
+      background: var(--v);
+      transform: scale(1.35);
+      box-shadow: 0 0 8px rgba(108,99,255,.6);
+    }
+    .dot.visited { background: rgba(108,99,255,.4); }
+
+    /* ── AUDIO BAR ── */
+    #audio-bar {
+      position: relative; z-index: 100; flex-shrink: 0;
+      background: rgba(26,26,46,.92); backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(108,99,255,.2);
+      padding: 10px 20px 12px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    #wave-bars {
+      display: flex; align-items: center; gap: 2.5px;
+      height: 28px; flex-shrink: 0;
+    }
+    .wave-bar {
+      width: 3px; border-radius: 3px;
+      background: linear-gradient(180deg, var(--v), rgba(108,99,255,.4));
+      transition: height .1s;
+      animation: wavePause 1.2s ease-in-out infinite;
+    }
+    .audio-playing .wave-bar { animation: waveAnim 0.8s ease-in-out infinite; }
+    .wave-bar:nth-child(1) { animation-delay: 0s; }
+    .wave-bar:nth-child(2) { animation-delay: .1s; }
+    .wave-bar:nth-child(3) { animation-delay: .2s; }
+    .wave-bar:nth-child(4) { animation-delay: .15s; }
+    .wave-bar:nth-child(5) { animation-delay: .05s; }
+    .wave-bar:nth-child(6) { animation-delay: .25s; }
+    .wave-bar:nth-child(7) { animation-delay: .1s; }
+    .wave-bar:nth-child(8) { animation-delay: .3s; }
+    @keyframes waveAnim {
+      0%,100% { height: 6px; }
+      50% { height: 22px; }
+    }
+    @keyframes wavePause {
+      0%,100% { height: 4px; }
+      50% { height: 8px; }
+    }
+    #audio-play-btn {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: none; background: var(--v); color: #fff;
+      font-size: 16px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .15s;
+      box-shadow: 0 4px 16px rgba(108,99,255,.4);
+    }
+    #audio-play-btn:hover { background: #5548e0; transform: scale(1.08); }
+    .audio-progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .audio-labels {
+      display: flex; justify-content: space-between;
+      font-size: .68rem; color: var(--muted); font-weight: 700;
+    }
+    .audio-track {
+      height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,.12); position: relative;
+      cursor: pointer; overflow: hidden;
+    }
+    .audio-fill {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, var(--v), var(--o));
+      width: 0%; transition: width .5s linear;
+    }
+    .audio-label-text {
+      font-size: .72rem; color: var(--muted); font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    /* ── PAGE TURN EFFECT ── */
+    @keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    .page-entering { animation: pageIn .4s ease; }
+
+    /* ── TOAST ── */
+    #toast-container {
+      position: fixed; bottom: 80px; right: 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 99000; pointer-events: none;
+    }
+    .t-toast {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 14px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.12);
+      font-size: .88rem; font-weight: 600;
+      max-width: 300px; pointer-events: all;
+      animation: tIn .35s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    }
+    .t-toast.success { background:rgba(34,197,94,.15); border-color:rgba(34,197,94,.3); color:#86efac; }
+    .t-toast.error   { background:rgba(239,68,68,.15);  border-color:rgba(239,68,68,.3);  color:#fca5a5; }
+    .t-toast.info    { background:rgba(108,99,255,.18); border-color:rgba(108,99,255,.4); color:#c4b5fd; }
+    .t-toast.warning { background:rgba(255,209,102,.15);border-color:rgba(255,209,102,.35);color:#fde68a; }
+    .t-toast.t-exit  { animation: tOut .3s ease forwards; }
+    @keyframes tIn  { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:none} }
+    @keyframes tOut { from{opacity:1;transform:none} to{opacity:0;transform:translateX(40px)} }
+
+    /* ── PAGE TRANSITIONS ── */
+    @keyframes pageOut { to { opacity:0; transform: scale(.97); } }
+    body.page-exit { animation: pageOut .28s ease forwards; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      #top-bar { padding: 8px 14px; }
+      #story-title { display: none; }
+      #btn-prev { left: 4px; }
+      #btn-next { right: 4px; }
+      .tb-logo-icon { width: 30px; height: 30px; font-size: 15px; }
+      .tb-logo { font-size: 1.1rem; }
+      .audio-label-text { display: none; }
+    }
+
+    /* ── FIX COLORIMETRIE ── */
+    .tb-logo, .tb-btn, #story-title { color: var(--txt); }
+
+  </style>
+</head>
+<body>
+  <!-- Cursor -->
+  <div id="cd"></div>
+  <div id="cr"></div>
+
+  <!-- Stars background -->
+  <canvas id="stars-bg"></canvas>
+
+  <!-- Book loader -->
+  <div id="book-loader">
+    <div class="loader-book"></div>
+    <div class="loader-text">Ouverture du livre…</div>
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Top bar -->
+  <nav id="top-bar">
+    <a href="index.html" class="tb-logo">
+      <div class="tb-logo-icon">📖</div>
+      <span>Tiny<span class="vt">Tale</span></span>
+    </a>
+    <div id="story-title">Votre histoire</div>
+    <div class="tb-actions">
+      <button class="tb-btn" id="btn-sound" title="Son" aria-label="Activer/désactiver le son">🔊</button>
+      <button class="tb-btn" id="btn-replay" title="Rejouer" aria-label="Rejouer depuis le début">🔄</button>
+      <button class="tb-btn" id="btn-close" title="Fermer" aria-label="Retour à l'accueil" onclick="goHome()">✕</button>
+    </div>
+  </nav>
+
+  <!-- Book scene -->
+  <div id="book-scene">
+    <!-- Nav arrows -->
+    <button id="btn-prev" aria-label="Page précédente" disabled>‹</button>
+    <button id="btn-next" aria-label="Page suivante">›</button>
+
+    <!-- 3D book -->
+    <div id="book-container">
+      <div id="book"></div>
+    </div>
+
+    <!-- Page dots -->
+    <div id="page-dots"></div>
+  </div>
+
+  <!-- Audio bar -->
+  <div id="audio-bar">
+    <div id="wave-bars"></div>
+    <button id="audio-play-btn" aria-label="Lecture / Pause">▶</button>
+    <div class="audio-progress-wrap">
+      <div class="audio-labels">
+        <span class="audio-label-text" id="audio-label-text">Histoire en cours…</span>
+        <span id="audio-time">0:00</span>
+      </div>
+      <div class="audio-track" id="audio-track">
+        <div class="audio-fill" id="audio-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real audio element -->
+  <audio id="story-audio" preload="auto"></audio>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ── Firebase init ── */
+  const cfg = TINYTALE_CONFIG.FIREBASE;
+  const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+  const auth = firebase.auth(app);
+
+  /* ── localStorage data ── */
+  const prenom  = localStorage.getItem('tinytale_prenom')  || 'votre enfant';
+  const theme   = localStorage.getItem('tinytale_theme')   || 'la forêt enchantée';
+  const age     = parseInt(localStorage.getItem('tinytale_age') || '6', 10);
+  const valeur  = localStorage.getItem('tinytale_valeur')  || 'le courage';
+  const duree   = parseInt(localStorage.getItem('tinytale_duree') || '180', 10);
+  const genre   = localStorage.getItem('tinytale_genre')   || 'neutre';
+
+  const isFille = genre === 'fille';
+  const heroArticle = isFille ? 'elle' : (genre === 'garcon' ? 'il' : 'iel');
+  const heroLe   = isFille ? 'la' : 'le';
+  const heroUn   = isFille ? 'une' : 'un';
+  const heroBrave= isFille ? 'brave' : 'brave';
+  const heroEmoji= isFille ? '👧' : (genre === 'garcon' ? '👦' : '🧒');
+  const themeEmoji = getThemeEmoji(theme);
+
+  document.getElementById('story-title').textContent =
+    `L'histoire de ${prenom}`;
+
+  /* ── State ── */
+  let currentSpread = 0;
+  let soundOn = true;
+  let audioPlaying = false;
+  let autoTimer = null;
+  let simInterval = null;
+  let simElapsed = 0;
+  let totalSpreads = 0;
+  let audioCtx = null;
+
+  const storyAudio = document.getElementById('story-audio');
+
+  /* ── Build pages content ── */
+  function buildBookPages() {
+    const prenomBold = `<em>${prenom}</em>`;
+    const themeBold  = `<em>${theme}</em>`;
+    const valeurBold = `<em>${valeur}</em>`;
+
+    return [
+      /* 0 — Cover */
+      {
+        type: 'cover',
+        emoji: themeEmoji,
+        title: `L'histoire de ${prenom}`,
+        subtitle: `Un conte sur ${theme}`,
+        badge: `✨ Créé avec amour pour ${prenom}`,
+      },
+      /* 1 — Chapter 1 */
+      {
+        type: 'text',
+        chapter: 'Chapitre 1 — Le début',
+        text: `Il était une fois ${prenomBold}, ${heroUn} enfant de ${age} ans plein${isFille?'e':''} de curiosité et d'enthousiasme. Un beau matin, ${heroLe} petit héros décida de partir à l'aventure dans ${themeBold}. Le cœur léger et les yeux grands ouverts, ${prenomBold} s'élança vers l'inconnu, guidé${isFille?'e':''} par une seule certitude : cette journée allait être mémorable.`,
+        pageNum: '1',
+      },
+      /* 2 — Illustration 1 */
+      {
+        type: 'illus',
+        emoji: themeEmoji,
+        caption: `${prenom} au cœur de ${theme}`,
+        color1: '#0f0620', color2: '#1a0e3a',
+      },
+      /* 3 — Chapter 2 */
+      {
+        type: 'text',
+        chapter: 'Chapitre 2 — L\'obstacle',
+        text: `Mais bientôt, ${prenomBold} se trouva face à un grand défi. La route était semée d'embûches et le chemin paraissait bien difficile. C'est alors que ${heroArticle} se souvint de la valeur la plus précieuse qu'on lui avait enseignée : ${valeurBold}. Avec cette force au fond du cœur, ${prenomBold} prit une grande inspiration et décida d'avancer pas à pas.`,
+        pageNum: '3',
+      },
+      /* 4 — Illustration 2 */
+      {
+        type: 'illus',
+        emoji: '⚡',
+        caption: `${prenom} fait preuve de ${valeur}`,
+        color1: '#1a0a2e', color2: '#2d1060',
+      },
+      /* 5 — Chapter 3 */
+      {
+        type: 'text',
+        chapter: 'Chapitre 3 — La victoire',
+        text: `Grâce à ${valeurBold} et à sa détermination sans faille, ${prenomBold} surmonta tous les obstacles. Les étoiles brillèrent plus fort ce soir-là, comme pour applaudir sa réussite. Et lorsque ${heroArticle} rentra à la maison, ${prenomBold} savait que cette aventure dans ${themeBold} avait changé quelque chose en ${heroArticle} pour toujours. Car les plus belles histoires ne finissent jamais vraiment — elles continuent dans les rêves.`,
+        pageNum: '5',
+      },
+      /* 6 — Back cover */
+      {
+        type: 'back',
+      },
+    ];
+  }
+
+  /* ── Build the physical book ── */
+  function buildBook() {
+    const pages = buildBookPages();
+    totalSpreads = pages.length;
+    const bookEl = document.getElementById('book');
+    bookEl.innerHTML = '';
+
+    pages.forEach((p, i) => {
+      const page = document.createElement('div');
+      page.className = 'page ' + (i % 2 === 0 ? 'right' : 'left');
+      page.id = 'page-' + i;
+      page.dataset.index = i;
+
+      const front = document.createElement('div');
+      front.className = 'page-face page-front';
+      front.innerHTML = buildSpreadHTML(p, i);
+
+      const back = document.createElement('div');
+      back.className = 'page-face page-back';
+      // Back face shows next page content mirrored
+      const nextPage = pages[i + 1];
+      if (nextPage) {
+        back.innerHTML = buildSpreadHTML(nextPage, i + 1);
+      } else {
+        back.innerHTML = '<div class="spread-cover" style="width:100%;height:100%;"></div>';
+      }
+
+      page.appendChild(front);
+      page.appendChild(back);
+      bookEl.appendChild(page);
+    });
+
+    buildDots();
+    updateNav();
+  }
+
+  function buildSpreadHTML(p, idx) {
+    if (p.type === 'cover') {
+      return `<div class="spread-cover" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+        <div class="cover-stars">${buildCoverStars()}</div>
+        <div class="cover-hero">${p.emoji}</div>
+        <div class="cover-title">${p.title}</div>
+        <div class="cover-sub">${p.subtitle}</div>
+        <div class="cover-badge">${p.badge}</div>
+      </div>`;
+    }
+    if (p.type === 'text') {
+      return `<div class="spread-text" style="width:100%;height:100%;">
+        <div class="page-chapter">${p.chapter}</div>
+        <div class="page-text">${p.text}</div>
+        <div class="page-num">${p.pageNum}</div>
+      </div>`;
+    }
+    if (p.type === 'illus') {
+      return `<div class="spread-illus" style="width:100%;height:100%;">
+        <div class="page-illus" id="illus-${idx}">
+          <div class="page-illus-emoji" style="background:linear-gradient(145deg,${p.color1},${p.color2});">
+            ${p.emoji}
+          </div>
+          <div class="page-illus-caption">${p.caption}</div>
+        </div>
+      </div>`;
+    }
+    if (p.type === 'back') {
+      return `<div class="spread-back" style="width:100%;height:100%;">
+        <div class="back-cover-inner">
+          <div class="back-logo-icon">📖</div>
+          <div class="back-title">Fin de l'histoire</div>
+          <div class="back-msg">Bravo ${prenom} ! Tu as terminé ton aventure. À bientôt pour une nouvelle histoire !</div>
+          <button class="back-replay-btn" onclick="rejouer()">🔄 Rejouer</button>
+          <button class="back-home-btn" onclick="goHome()">Accueil</button>
+        </div>
+      </div>`;
+    }
+    return '';
+  }
+
+  function buildCoverStars() {
+    let html = '';
+    for (let i = 0; i < 20; i++) {
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const s = Math.random() * 2.5 + 1;
+      const d = (Math.random() * 2 + 1).toFixed(1);
+      const delay = (Math.random() * 2).toFixed(1);
+      html += `<div class="cover-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;--d:${d}s;--delay:${delay}s;"></div>`;
+    }
+    return html;
+  }
+
+  /* ── Navigation ── */
+  function goToSpread(idx) {
+    if (idx < 0 || idx >= totalSpreads) return;
+    const pages = document.querySelectorAll('.page');
+    pages.forEach((p, i) => {
+      const pIdx = parseInt(p.dataset.index);
+      if (idx > currentSpread) {
+        // Going forward
+        if (pIdx <= idx - 1) p.classList.add('turned');
+        else p.classList.remove('turned');
+      } else {
+        // Going back
+        if (pIdx <= idx - 1) p.classList.add('turned');
+        else p.classList.remove('turned');
+      }
+    });
+    currentSpread = idx;
+    updateNav();
+    updatePageDots();
+    playPageSound();
+    // Ken Burns
+    document.querySelectorAll('.page-illus').forEach(el => el.classList.remove('active'));
+    const activeIllus = document.querySelector(`#illus-${idx}`);
+    if (activeIllus) activeIllus.classList.add('active');
+  }
+
+  function goNext() {
+    if (currentSpread < totalSpreads - 1) goToSpread(currentSpread + 1);
+  }
+
+  function goBack() {
+    if (currentSpread > 0) goToSpread(currentSpread - 1);
+  }
+
+  function updateNav() {
+    const prev = document.getElementById('btn-prev');
+    const next = document.getElementById('btn-next');
+    if (prev) prev.disabled = currentSpread === 0;
+    if (next) next.disabled = currentSpread === totalSpreads - 1;
+  }
+
+  function buildDots() {
+    const dotsEl = document.getElementById('page-dots');
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < totalSpreads; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.dataset.idx = i;
+      d.addEventListener('click', () => goToSpread(i));
+      dotsEl.appendChild(d);
+    }
+  }
+
+  function updatePageDots() {
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === currentSpread);
+      d.classList.toggle('visited', i < currentSpread);
+    });
+  }
+
+  /* ── Audio ── */
+  function startAudio() {
+    if (!storyAudio.src || storyAudio.src === window.location.href) {
+      simulateAudio();
+      return;
+    }
+    storyAudio.play().then(() => {
+      audioPlaying = true;
+      updateAudioUI();
+    }).catch(() => {
+      simulateAudio();
+    });
+  }
+
+  function pauseAudio() {
+    if (simInterval) {
+      clearInterval(simInterval);
+      simInterval = null;
+    }
+    storyAudio.pause();
+    audioPlaying = false;
+    updateAudioUI();
+  }
+
+  function simulateAudio() {
+    audioPlaying = true;
+    updateAudioUI();
+    if (simInterval) clearInterval(simInterval);
+    simInterval = setInterval(() => {
+      simElapsed++;
+      const pct = Math.min(simElapsed / duree, 1);
+      updateAudioFill(pct);
+      updateAudioTime(simElapsed, duree);
+      if (simElapsed >= duree) {
+        clearInterval(simInterval);
+        simInterval = null;
+        audioPlaying = false;
+        updateAudioUI();
+        stopAutoPageTimer();
+      }
+    }, 1000);
+    startAutoPageTimer();
+  }
+
+  function updateAudioUI() {
+    const btn = document.getElementById('audio-play-btn');
+    const bar = document.getElementById('audio-bar');
+    if (btn) btn.textContent = audioPlaying ? '⏸' : '▶';
+    if (bar) bar.classList.toggle('audio-playing', audioPlaying);
+  }
+
+  function updateAudioFill(pct) {
+    const fill = document.getElementById('audio-fill');
+    if (fill) fill.style.width = (pct * 100) + '%';
+  }
+
+  function updateAudioTime(elapsed, total) {
+    const el = document.getElementById('audio-time');
+    if (!el) return;
+    const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+    el.textContent = fmt(elapsed) + ' / ' + fmt(total);
+  }
+
+  /* ── Auto page turn ── */
+  function startAutoPageTimer() {
+    stopAutoPageTimer();
+    if (totalSpreads <= 1) return;
+    const interval = Math.max(20000, (duree * 1000) / (totalSpreads - 1));
+    let count = 0;
+    autoTimer = setInterval(() => {
+      count++;
+      if (currentSpread < totalSpreads - 1) {
+        goNext();
+      } else {
+        stopAutoPageTimer();
+      }
+    }, interval);
+  }
+
+  function stopAutoPageTimer() {
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  }
+
+  /* ── Page sound ── */
+  function playPageSound() {
+    if (!soundOn) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.18);
+    } catch(e) { /* AudioContext not available */ }
+  }
+
+  /* ── Sound toggle ── */
+  function toggleSound() {
+    soundOn = !soundOn;
+    const btn = document.getElementById('btn-sound');
+    if (btn) btn.textContent = soundOn ? '🔊' : '🔇';
+    if (!soundOn) {
+      storyAudio.muted = true;
+    } else {
+      storyAudio.muted = false;
+    }
+  }
+
+  /* ── Rejouer / Home ── */
+  window.rejouer = function() {
+    simElapsed = 0;
+    stopAutoPageTimer();
+    if (simInterval) { clearInterval(simInterval); simInterval = null; }
+    storyAudio.currentTime = 0;
+    goToSpread(0);
+    updateAudioFill(0);
+    updateAudioTime(0, duree);
+    setTimeout(() => { startAudio(); }, 300);
+  };
+
+  window.goHome = function() {
+    document.body.classList.add('page-exit');
+    setTimeout(() => { window.location.href = 'index.html'; }, 290);
+  };
+
+  /* ── Swipe support ── */
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 60) {
+      if (dx < 0) goNext(); else goBack();
+    }
+  }, { passive: true });
+
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext(); }
+    if (e.key === 'ArrowLeft') goBack();
+    if (e.key === 'Escape') goHome();
+    if (e.key === 'm' || e.key === 'M') toggleSound();
+  });
+
+  /* ── Audio bar events ── */
+  storyAudio.addEventListener('timeupdate', () => {
+    if (storyAudio.duration) {
+      updateAudioFill(storyAudio.currentTime / storyAudio.duration);
+      updateAudioTime(storyAudio.currentTime, storyAudio.duration);
+    }
+  });
+  storyAudio.addEventListener('play', () => { audioPlaying = true; updateAudioUI(); startAutoPageTimer(); });
+  storyAudio.addEventListener('pause', () => { audioPlaying = false; updateAudioUI(); });
+  storyAudio.addEventListener('ended', () => {
+    audioPlaying = false; updateAudioUI(); stopAutoPageTimer();
+  });
+
+  document.getElementById('audio-play-btn').addEventListener('click', () => {
+    if (audioPlaying) pauseAudio(); else startAudio();
+  });
+
+  document.getElementById('btn-sound').addEventListener('click', toggleSound);
+  document.getElementById('btn-replay').addEventListener('click', window.rejouer);
+
+  document.getElementById('audio-track').addEventListener('click', e => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    if (storyAudio.duration) {
+      storyAudio.currentTime = pct * storyAudio.duration;
+    } else {
+      simElapsed = Math.floor(pct * duree);
+      updateAudioFill(pct);
+      updateAudioTime(simElapsed, duree);
+    }
+  });
+
+  document.getElementById('btn-prev').addEventListener('click', goBack);
+  document.getElementById('btn-next').addEventListener('click', goNext);
+
+  /* ── Custom cursor ── */
+  (function() {
+    const cd = document.getElementById('cd');
+    const cr = document.getElementById('cr');
+    let mx=0, my=0, rx=0, ry=0;
+    document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cd.style.left=mx+'px'; cd.style.top=my+'px'; });
+    (function animCursor() {
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      cr.style.left=rx+'px'; cr.style.top=ry+'px';
+      requestAnimationFrame(animCursor);
+    })();
+    document.querySelectorAll('button,a,[role=button],.dot').forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('ch'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('ch'));
+    });
+  })();
+
+  /* ── Starry background ── */
+  function initStarsBg() {
+    const canvas = document.getElementById('stars-bg');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    function makeStars(n) {
+      stars = [];
+      for (let i = 0; i < n; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.4 + 0.3,
+          a: Math.random(),
+          da: (Math.random() * 0.006 + 0.002) * (Math.random() < 0.5 ? 1 : -1),
+        });
+      }
+    }
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(s => {
+        s.a += s.da;
+        if (s.a <= 0.05 || s.a >= 1) s.da = -s.da;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${s.a.toFixed(2)})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(drawStars);
+    }
+    resize();
+    makeStars(160);
+    drawStars();
+    window.addEventListener('resize', () => { resize(); makeStars(160); });
+  }
+
+  /* ── Wave bars ── */
+  function initWaveBars() {
+    const container = document.getElementById('wave-bars');
+    container.innerHTML = '';
+    const heights = [8,14,20,16,24,12,18,10];
+    heights.forEach(h => {
+      const bar = document.createElement('div');
+      bar.className = 'wave-bar';
+      bar.style.height = h + 'px';
+      container.appendChild(bar);
+    });
+  }
+
+  /* ── Theme emoji helper ── */
+  function getThemeEmoji(th) {
+    if (!th) return '✨';
+    const t = th.toLowerCase();
+    if (t.includes('for') || t.includes('arbre') || t.includes('nature')) return '🌲';
+    if (t.includes('mer') || t.includes('oce') || t.includes('plage')) return '🌊';
+    if (t.includes('espace') || t.includes('étoile') || t.includes('planète')) return '🚀';
+    if (t.includes('dragon') || t.includes('feu')) return '🐉';
+    if (t.includes('château') || t.includes('roi') || t.includes('reine')) return '🏰';
+    if (t.includes('magie') || t.includes('sorcier')) return '🧙';
+    if (t.includes('animal') || t.includes('zoo')) return '🦁';
+    if (t.includes('fée')) return '🧚';
+    if (t.includes('pirate') || t.includes('trésor')) return '🏴‍☠️';
+    if (t.includes('dino')) return '🦕';
+    return '✨';
+  }
+
+  /* ── Init ── */
+  function init() {
+    initStarsBg();
+    initWaveBars();
+    buildBook();
+    updateAudioTime(0, duree);
+    document.getElementById('audio-label-text').textContent =
+      `L'histoire de ${prenom} — ${theme}`;
+
+    // Hide loader after short delay
+    setTimeout(() => {
+      document.getElementById('book-loader').classList.add('hidden');
+      // Auto-start audio simulation
+      setTimeout(() => { startAudio(); }, 400);
+    }, 1800);
+  }
+
+  init();
+
+  /* ── Auth nav state (optional) ── */
+  auth.onAuthStateChanged(() => { /* navbar is minimal in book view */ });
+
+})();
+
+/* ── Toast ── */
+window.showToast = function(type, msg, dur=3500) {
+  const tc = document.getElementById('toast-container');
+  if (!tc) return;
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `t-toast ${type}`;
+  el.innerHTML = `<span style="font-size:18px">${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span><button onclick="this.parentElement.classList.add('t-exit');this.parentElement.addEventListener('animationend',()=>this.parentElement.remove(),{once:true})" style="background:transparent;border:none;cursor:pointer;color:inherit;font-size:15px;opacity:.6;margin-left:8px;padding:0;">✕</button>`;
+  tc.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode){ el.classList.add('t-exit'); el.addEventListener('animationend',()=>el.remove(),{once:true}); }}, dur);
+};
+
+/* ── Page transitions ── */
+(function(){
+  document.querySelectorAll('a[href]').forEach(a=>{
+    const href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('mailto:')||href.startsWith('http')||href.startsWith('//')) return;
+    a.addEventListener('click',e=>{
+      e.preventDefault();
+      document.body.classList.add('page-exit');
+      setTimeout(()=>{ window.location.href=href; },290);
+    });
+  });
+})();
+</script>
+</body>
+</html>
