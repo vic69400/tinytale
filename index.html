@@ -808,8 +808,12 @@
 <!-- ══ 3. NAVBAR ══════════════════════════════════════════ -->
 <nav id="nav" role="navigation" aria-label="Navigation principale">
   <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
-    <div onmouseover="this.style.transform='rotate(10deg) scale(1.1)'" onmouseout="this.style.transform=''"
-         style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(108,99,255,.5);transition:transform .3s;flex-shrink:0;">📖</div>
+    <!-- ✅ IMAGE INTÉGRÉE -->
+    <img src="logo.png"
+         alt="TinyTale"
+         style="height:44px;width:auto;display:block;
+                filter:drop-shadow(0 2px 8px rgba(108,99,255,0.4));"
+         onerror="this.style.display='none'">
     <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3);">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
   <ul class="nav-links">
@@ -882,11 +886,14 @@
            Taille recommandée : 480×560px (portrait)
            Pour remplacer : <img src="hero-enfant.jpg" style="width:100%;border-radius:24px;object-fit:cover;">
            ═══════════════════════════════════════════ -->
-      <div style="width:100%;max-width:460px;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(108,99,255,0.3);">
-        <!-- 📷 REMPLACE hero-enfant.jpg par ton image Leonardo -->
+      <!-- ✅ IMAGE INTÉGRÉE -->
+      <div style="width:100%;max-width:520px;border-radius:28px;
+                  overflow:hidden;
+                  box-shadow:0 32px 80px rgba(108,99,255,0.35);
+                  animation:pfloat 4s ease-in-out infinite;">
         <img src="hero-enfant.jpg"
-             alt="Enfant qui écoute son histoire TinyTale"
-             style="width:100%;height:420px;object-fit:cover;display:block;"
+             alt="Enfant qui lit une histoire magique TinyTale"
+             style="width:100%;height:480px;object-fit:cover;display:block;"
              onerror="this.parentElement.style.display='none'">
       </div>
       <div class="phone-wrap">
@@ -923,11 +930,13 @@
          Taille recommandée : 800×400px (paysage)
          Pour remplacer : <img src="demo-app.png" style="width:100%;border-radius:20px;">
          ═══════════════════════════════════════════ -->
-    <div style="width:100%;border-radius:20px;overflow:hidden;box-shadow:0 16px 48px rgba(108,99,255,0.2);margin-bottom:48px;">
-      <!-- 📷 REMPLACE demo-app.jpg par ton image Leonardo -->
+    <!-- ✅ IMAGE INTÉGRÉE -->
+    <div style="width:100%;border-radius:24px;overflow:hidden;
+                box-shadow:0 20px 60px rgba(108,99,255,0.22);
+                margin-bottom:52px;">
       <img src="demo-app.jpg"
-           alt="Aperçu de l'application TinyTale"
-           style="width:100%;height:300px;object-fit:cover;display:block;"
+           alt="Parent et enfant utilisant TinyTale"
+           style="width:100%;height:360px;object-fit:cover;display:block;"
            onerror="this.parentElement.style.display='none'">
     </div>
     <div class="how-grid">
@@ -1045,11 +1054,13 @@
          Taille recommandée : 500×500px (carré)
          Pour remplacer : <img src="famille.jpg" style="width:100%;border-radius:24px;">
          ═══════════════════════════════════════════ -->
-    <div style="width:100%;max-width:480px;border-radius:24px;overflow:hidden;box-shadow:0 16px 48px rgba(108,99,255,0.2);margin:48px auto 0;">
-      <!-- 📷 REMPLACE famille.jpg par ton image Leonardo -->
+    <!-- ✅ IMAGE INTÉGRÉE -->
+    <div style="width:100%;max-width:500px;border-radius:28px;
+                overflow:hidden;margin:48px auto 0;
+                box-shadow:0 20px 60px rgba(108,99,255,0.22);">
       <img src="famille.jpg"
-           alt="Parent et enfant qui lisent ensemble"
-           style="width:100%;height:400px;object-fit:cover;display:block;"
+           alt="Moment magique entre parent et enfant"
+           style="width:100%;height:440px;object-fit:cover;display:block;"
            onerror="this.parentElement.style.display='none'">
     </div>
   </div>
@@ -1213,7 +1224,12 @@
     <div class="ftop">
       <div class="fbrand">
         <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">
-          <div style="width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 24px rgba(108,99,255,.5);">📖</div>
+          <!-- ✅ IMAGE INTÉGRÉE -->
+          <img src="logo.png"
+               alt="TinyTale"
+               style="height:56px;width:auto;display:block;
+                      filter:drop-shadow(0 4px 16px rgba(108,99,255,0.5));"
+               onerror="this.style.display='none'">
           <span style="font-family:'Baloo 2',cursive;font-size:28px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
         </div>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans. La magie de la lecture au bout des doigts.</p>

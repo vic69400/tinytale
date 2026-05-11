@@ -572,8 +572,12 @@
 <!-- ══ NAVBAR ════════════════════════════════════════════ -->
 <nav id="nav">
   <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
-    <div onmouseover="this.style.transform='rotate(10deg) scale(1.1)'" onmouseout="this.style.transform=''"
-         style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 20px rgba(108,99,255,.5);transition:transform .3s;flex-shrink:0;">📖</div>
+    <!-- ✅ IMAGE INTÉGRÉE -->
+    <img src="logo.png"
+         alt="TinyTale"
+         style="height:44px;width:auto;display:block;
+                filter:drop-shadow(0 2px 8px rgba(108,99,255,0.4));"
+         onerror="this.style.display='none'">
     <span style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:#FFFFFF;letter-spacing:-0.5px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.3);">Tiny<span style="color:#FFD166;">Tale</span></span>
   </a>
   <ul class="nav-links">
@@ -629,11 +633,13 @@
       <span id="duree-display">4 min 32</span> &nbsp;·&nbsp;
       Illustrée par IA
     </p>
-    <!-- 📷 REMPLACE cover-lucas.jpg par ton image Leonardo -->
-    <div style="width:100%;max-width:500px;margin:32px auto;border-radius:20px;overflow:hidden;box-shadow:0 24px 64px rgba(108,99,255,0.4);">
+    <!-- ✅ IMAGE INTÉGRÉE -->
+    <div style="width:100%;max-width:680px;margin:32px auto;
+                border-radius:24px;overflow:hidden;
+                box-shadow:0 32px 80px rgba(108,99,255,0.45);">
       <img src="cover-lucas.jpg"
-           alt="Couverture — L'Aventure de Lucas"
-           style="width:100%;height:300px;object-fit:cover;display:block;"
+           alt="L'Aventure de Lucas dans les Étoiles"
+           style="width:100%;height:380px;object-fit:cover;display:block;"
            onerror="this.parentElement.style.display='none'">
     </div>
   </div>
@@ -739,13 +745,14 @@
            ═══════════════════════════════════════════ -->
       <!-- 1 — span 2 cols -->
       <div class="illus-card reveal">
+        <!-- ✅ IMAGE INTÉGRÉE -->
+        <img src="illustration-1.jpg"
+             style="position:absolute;inset:0;width:100%;height:100%;
+                    object-fit:cover;z-index:1;border-radius:20px;"
+             onerror="this.style.display='none'"
+             alt="Scène 1">
         <div class="illus-bg"></div>
         <div class="illus-stars" id="is0"></div>
-        <!-- 📷 REMPLACE illustration-1.jpg par ton image Leonardo -->
-        <img src="illustration-1.jpg"
-             alt="Illustration 1 — L'histoire de Lucas"
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;"
-             onerror="this.style.display='none'">
         <div class="illus-emoji">🚀</div>
         <div class="illus-label">L'envol vers les étoiles</div>
         <div class="illus-badge">Scène 1</div>
@@ -756,13 +763,14 @@
            ═══════════════════════════════════════════ -->
       <!-- 2 -->
       <div class="illus-card reveal" style="transition-delay:.1s">
+        <!-- ✅ IMAGE INTÉGRÉE -->
+        <img src="illustration-2.jpg"
+             style="position:absolute;inset:0;width:100%;height:100%;
+                    object-fit:cover;z-index:1;border-radius:20px;"
+             onerror="this.style.display='none'"
+             alt="Scène 2">
         <div class="illus-bg"></div>
         <div class="illus-stars" id="is1"></div>
-        <!-- 📷 REMPLACE illustration-2.jpg par ton image Leonardo -->
-        <img src="illustration-2.jpg"
-             alt="Illustration 2 — L'histoire de Lucas"
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;"
-             onerror="this.style.display='none'">
         <div class="illus-emoji">🌌</div>
         <div class="illus-label">Le cosmos à l'infini</div>
         <div class="illus-badge">Scène 2</div>
@@ -773,13 +781,14 @@
            ═══════════════════════════════════════════ -->
       <!-- 3 -->
       <div class="illus-card reveal" style="transition-delay:.15s">
+        <!-- ✅ IMAGE INTÉGRÉE -->
+        <img src="illustration-3.jpg"
+             style="position:absolute;inset:0;width:100%;height:100%;
+                    object-fit:cover;z-index:1;border-radius:20px;"
+             onerror="this.style.display='none'"
+             alt="Scène 3">
         <div class="illus-bg"></div>
         <div class="illus-stars" id="is2"></div>
-        <!-- 📷 REMPLACE illustration-3.jpg par ton image Leonardo -->
-        <img src="illustration-3.jpg"
-             alt="Illustration 3 — L'histoire de Lucas"
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;"
-             onerror="this.style.display='none'">
         <div class="illus-emoji">🦸</div>
         <div class="illus-label">Le héros courageux</div>
         <div class="illus-badge">Scène 3</div>
@@ -790,13 +799,14 @@
            ═══════════════════════════════════════════ -->
       <!-- 4 -->
       <div class="illus-card reveal" style="transition-delay:.2s">
+        <!-- ✅ IMAGE INTÉGRÉE -->
+        <img src="illustration-4.jpg"
+             style="position:absolute;inset:0;width:100%;height:100%;
+                    object-fit:cover;z-index:1;border-radius:20px;"
+             onerror="this.style.display='none'"
+             alt="Scène 4">
         <div class="illus-bg"></div>
         <div class="illus-stars" id="is3"></div>
-        <!-- 📷 REMPLACE illustration-4.jpg par ton image Leonardo -->
-        <img src="illustration-4.jpg"
-             alt="Illustration 4 — L'histoire de Lucas"
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;"
-             onerror="this.style.display='none'">
         <div class="illus-emoji">⭐</div>
         <div class="illus-label">La Grande Ourse réparée</div>
         <div class="illus-badge">Scène 4</div>
@@ -807,13 +817,14 @@
            ═══════════════════════════════════════════ -->
       <!-- 5 — span 2 cols -->
       <div class="illus-card reveal" style="transition-delay:.25s">
+        <!-- ✅ IMAGE INTÉGRÉE -->
+        <img src="illustration-5.jpg"
+             style="position:absolute;inset:0;width:100%;height:100%;
+                    object-fit:cover;z-index:1;border-radius:20px;"
+             onerror="this.style.display='none'"
+             alt="Scène 5">
         <div class="illus-bg"></div>
         <div class="illus-stars" id="is4"></div>
-        <!-- 📷 REMPLACE illustration-5.jpg par ton image Leonardo -->
-        <img src="illustration-5.jpg"
-             alt="Illustration 5 — L'histoire de Lucas"
-             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;"
-             onerror="this.style.display='none'">
         <div class="illus-emoji">🏠</div>
         <div class="illus-label">Retour à la maison</div>
         <div class="illus-badge">Scène 5</div>
@@ -876,7 +887,12 @@
     <div class="ftop">
       <div class="fbrand">
         <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;">
-          <div style="width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#6C63FF,#4A43CC);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 24px rgba(108,99,255,.5);">📖</div>
+          <!-- ✅ IMAGE INTÉGRÉE -->
+          <img src="logo.png"
+               alt="TinyTale"
+               style="height:56px;width:auto;display:block;
+                      filter:drop-shadow(0 4px 16px rgba(108,99,255,0.5));"
+               onerror="this.style.display='none'">
           <span style="font-family:'Baloo 2',cursive;font-size:28px;font-weight:800;color:white;letter-spacing:-1px;">Tiny<span style="color:#FFD166;">Tale</span></span>
         </div>
         <p class="fdesc">Des histoires personnalisées, narrées et illustrées pour les enfants de 2 à 10 ans.</p>
