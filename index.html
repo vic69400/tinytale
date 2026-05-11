@@ -153,28 +153,68 @@
     .nav-cta:hover { background: #5548e0 !important; transform: translateY(-2px); }
 
     #burger {
-      display: none; flex-direction: column; gap: 5px;
-      background: none; border: none; cursor: pointer; padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      z-index: 1001;
+      position: relative;
     }
     #burger span {
-      display: block; width: 24px; height: 2px;
-      background: var(--txt); border-radius: 2px; transition: all .3s;
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: #FFFFFF;
+      border-radius: 2px;
+      transition: all .3s ease;
+      pointer-events: none;
     }
+    @media (max-width: 768px) {
+      #burger { display: flex !important; }
+      .nav-links { display: none !important; }
+      #nav-auth-zone .nav-login-btn span,
+      #nav-auth-zone .nav-library-btn span { display: none; }
+    }
+    /* Burger animation */
     #burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-    #burger.open span:nth-child(2) { opacity: 0; }
+    #burger.open span:nth-child(2) { opacity: 0; transform: translateX(-8px); }
     #burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
+    /* Menu mobile */
     #mmenu {
-      display: none; position: fixed; inset: 0; z-index: 999;
-      background: rgba(26,26,46,.97); backdrop-filter: blur(20px);
-      flex-direction: column; align-items: center; justify-content: center; gap: 32px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(26,26,46,0.97);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
     }
-    #mmenu.open { display: flex; }
+    #mmenu.open { display: flex !important; }
     #mmenu a {
-      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 700;
-      color: var(--txt); transition: color .2s;
+      font-family: 'Baloo 2', cursive;
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      text-decoration: none;
+      transition: color .2s;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: menuItemIn .4s ease forwards;
     }
-    #mmenu a:hover { color: var(--v); }
+    #mmenu.open a:nth-child(1) { animation-delay: .05s; }
+    #mmenu.open a:nth-child(2) { animation-delay: .10s; }
+    #mmenu.open a:nth-child(3) { animation-delay: .15s; }
+    #mmenu.open a:nth-child(4) { animation-delay: .20s; }
+    #mmenu.open a:nth-child(5) { animation-delay: .25s; }
+    @keyframes menuItemIn { to { opacity: 1; transform: translateY(0); } }
+    #mmenu a:hover { color: #6C63FF; }
 
     /* ─── HERO ─────────────────────────────────────────── */
     #hero {
@@ -1313,16 +1353,31 @@ window.addEventListener('scroll', () => {
 /* ─── BURGER ─────────────────────────────────────────── */
 const burger = document.getElementById('burger');
 const mmenu  = document.getElementById('mmenu');
-burger.addEventListener('click', () => {
-  burger.classList.toggle('open');
-  mmenu.classList.toggle('open');
-});
-document.querySelectorAll('.ml').forEach(a => {
-  a.addEventListener('click', () => {
-    burger.classList.remove('open');
-    mmenu.classList.remove('open');
+
+if (burger && mmenu) {
+  burger.addEventListener('click', () => {
+    burger.classList.toggle('open');
+    mmenu.classList.toggle('open');
+    document.body.style.overflow =
+      mmenu.classList.contains('open') ? 'hidden' : '';
   });
-});
+
+  document.querySelectorAll('#mmenu a').forEach(a => {
+    a.addEventListener('click', () => {
+      burger.classList.remove('open');
+      mmenu.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+
+  mmenu.addEventListener('click', e => {
+    if (e.target === mmenu) {
+      burger.classList.remove('open');
+      mmenu.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+}
 
 /* ─── HERO CANVAS: PARTICLES + SHOOTING STARS ────────── */
 const cvs = document.getElementById('hcanvas');
