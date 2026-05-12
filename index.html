@@ -1185,6 +1185,237 @@
     .plans-next { right: 4px; }
   }
 
+
+  /* ══ FOCUS CAROUSEL PRICING ══════════════════════════ */
+
+  .fc-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 40px 0 20px;
+    perspective: 1200px;
+    min-height: 480px;
+  }
+
+  .fc-card {
+    position: relative;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(108,99,255,0.2);
+    border-radius: 24px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    width: 220px;
+    flex-shrink: 0;
+    opacity: 0.52;
+    transform: scale(0.82) translateZ(-60px);
+    filter: blur(0.5px) brightness(0.7);
+    transition:
+      transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.45s ease,
+      filter 0.45s ease,
+      box-shadow 0.45s ease,
+      width 0.45s ease;
+    z-index: 1;
+  }
+
+  .fc-card.active {
+    width: 300px;
+    opacity: 1;
+    transform: scale(1.05) translateZ(0px);
+    filter: none;
+    z-index: 10;
+    box-shadow:
+      0 32px 80px rgba(108,99,255,0.35),
+      0 0 0 1px rgba(108,99,255,0.3);
+    border-color: rgba(108,99,255,0.5);
+    cursor: default;
+  }
+
+  .fc-card.featured.active {
+    background: linear-gradient(160deg,
+      rgba(108,99,255,0.18) 0%,
+      rgba(26,26,46,0.95) 100%);
+    border-color: var(--v);
+    box-shadow:
+      0 32px 80px rgba(108,99,255,0.5),
+      0 0 0 2px var(--v),
+      0 0 60px rgba(108,99,255,0.2);
+    animation: fcGlow 3s ease-in-out infinite;
+  }
+
+  @keyframes fcGlow {
+    0%,100% { box-shadow: 0 32px 80px rgba(108,99,255,.5), 0 0 0 2px #6C63FF, 0 0 60px rgba(108,99,255,.2); }
+    50%      { box-shadow: 0 32px 80px rgba(108,99,255,.7), 0 0 0 2px #9B94FF, 0 0 80px rgba(108,99,255,.35); }
+  }
+
+  .fc-card:not(.active):hover {
+    opacity: 0.72;
+    filter: brightness(0.85);
+  }
+
+  .fc-popular {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--v), #9b8fff);
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 50px;
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(108,99,255,.45);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .fc-card.active .fc-popular { opacity: 1; }
+
+  .fc-icon {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .fc-card.active .fc-icon { transform: scale(1.15); }
+
+  .fc-badge-plan {
+    font-family: 'Baloo 2', cursive;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(232,232,240,0.55);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    transition: color 0.3s;
+  }
+  .fc-card.active .fc-badge-plan { color: rgba(232,232,240,0.82); }
+
+  .fc-price {
+    display: flex;
+    align-items: flex-start;
+    gap: 2px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .fc-currency {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--o);
+    margin-top: 6px;
+  }
+  .fc-amount {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    transition: font-size 0.3s ease;
+  }
+  .fc-card.active .fc-amount { font-size: 3rem; }
+
+  .fc-period {
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .fc-feats {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 24px;
+    width: 100%;
+    text-align: left;
+  }
+  .fc-feats li { font-size: .82rem; font-weight: 600; padding: 0 4px; transition: opacity 0.3s; }
+  .fc-feats li.on  { color: rgba(232,232,240,0.85); }
+  .fc-feats li.off { color: rgba(232,232,240,0.28); text-decoration: line-through; }
+
+  .fc-card:not(.active) .fc-feats {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .fc-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 50px;
+    font-family: 'Baloo 2', cursive;
+    font-size: .92rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid rgba(108,99,255,0.5);
+    background: transparent;
+    color: #9B94FF;
+    transition: all 0.2s;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+  .fc-card.active .fc-btn { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .fc-btn:hover { background: var(--v); color: #fff; border-color: var(--v); }
+  .fc-btn.gold {
+    background: var(--o);
+    color: var(--n);
+    border-color: var(--o);
+    box-shadow: 0 6px 20px rgba(255,209,102,.4);
+  }
+  .fc-btn.gold:hover {
+    background: #E6B800;
+    box-shadow: 0 10px 28px rgba(255,209,102,.55);
+    transform: translateY(-2px);
+  }
+
+  .fc-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .fc-ind-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    border: none;
+  }
+  .fc-ind-dot.active { background: var(--v); width: 28px; border-radius: 4px; }
+
+  .fc-selected-label {
+    text-align: center;
+    font-size: .85rem;
+    color: rgba(232,232,240,0.6);
+    margin-top: 14px;
+    min-height: 22px;
+    transition: all 0.3s ease;
+  }
+  .fc-selected-label strong { color: var(--o); }
+
+  @media (max-width: 768px) {
+    .fc-wrap { padding: 36px 0 16px; }
+    .fc-card { width: 180px; padding: 24px 16px; border-radius: 20px; }
+    .fc-card.active { width: 240px; }
+    .fc-amount { font-size: 2rem; }
+    .fc-card.active .fc-amount { font-size: 2.6rem; }
+  }
+
+  @media (max-width: 400px) {
+    .fc-card { width: 150px; padding: 20px 12px; }
+    .fc-card.active { width: 210px; }
+  }
+
   </style>
 </head>
 <body>
@@ -1473,131 +1704,114 @@
 <section id="pricing">
   <div class="si">
 
-    <!-- Header -->
     <div class="reveal" style="text-align:center">
       <span class="stag">Tarifs</span>
-      <h2 class="stitle">Commencez <span style="color:var(--v)">gratuitement</span></h2>
-      <p class="ssub" style="margin:0 auto 30px">
+      <h2 class="stitle">
+        Commencez <span style="color:var(--v)">gratuitement</span>
+      </h2>
+      <p class="ssub" style="margin:0 auto 16px">
         Sans carte bancaire. Annulez quand vous voulez.
       </p>
     </div>
 
-    <!-- Bannière promo -->
-    <div class="price-banner reveal">
-      🎁 <em>1ère histoire offerte</em> pour chaque nouveau compte
-      — sans engagement, sans carte bancaire.
-    </div>
-
-    <!-- Toggle mensuel/annuel -->
+    <!-- Toggle mensuel / annuel -->
     <div class="ptoggle reveal">
       <span class="ptlabel on" id="plm">Mensuel</span>
-      <button class="tswitch" id="pts" aria-label="Basculer mensuel/annuel">
+      <button class="tswitch" id="pts" aria-label="Toggle annuel">
         <div class="tknob"></div>
       </button>
       <span class="ptlabel" id="pla">Annuel</span>
       <span class="tbadge">–20%</span>
     </div>
 
-    <!-- CARROUSEL PLANS -->
-    <div class="plans-carousel-wrap">
+    <!-- CARROUSEL FOCUS -->
+    <div class="fc-wrap reveal" id="fcWrap">
 
-      <!-- Track glissant -->
-      <div class="plans-track" id="plansTrack">
-
-        <!-- PLAN 1 — GRATUIT -->
-        <div class="plan-slide">
-          <div class="pcard reveal">
-            <div class="plan-icon">🌱</div>
-            <p class="pname">Découverte</p>
-            <p class="pprice"><sup>€</sup>0</p>
-            <p class="pdesc">Pour essayer la magie TinyTale sans engagement.</p>
-            <ul class="pfeats">
-              <li>1 histoire offerte</li>
-              <li>Narration audio incluse</li>
-              <li>1 illustration</li>
-              <li class="off">Histoires illimitées</li>
-              <li class="off">Bibliothèque famille</li>
-              <li class="off">Mode hors-ligne</li>
-            </ul>
-            <button class="pbtn"
-              onclick="window.location.href='create.html'">
-              Commencer gratuitement
-            </button>
-          </div>
+      <!-- Plan 0 — Gratuit -->
+      <div class="fc-card" data-index="0">
+        <div class="fc-icon">🌱</div>
+        <div class="fc-badge-plan">Découverte</div>
+        <div class="fc-price">
+          <span class="fc-currency">€</span>
+          <span class="fc-amount">0</span>
         </div>
-
-        <!-- PLAN 2 — FAMILLE (featured) -->
-        <div class="plan-slide">
-          <div class="pcard feat reveal">
-            <div class="pbadge">⭐ Le plus populaire</div>
-            <div class="plan-icon">👨‍👩‍👧</div>
-            <p class="pname">Famille</p>
-            <p class="pprice" id="pf">
-              <sup>€</sup>9<span class="per">,99 / mois</span>
-            </p>
-            <p class="pdesc">
-              Le choix parfait pour les familles avec 1 à 3 enfants.
-            </p>
-            <ul class="pfeats">
-              <li>Histoires illimitées</li>
-              <li>Narration audio incluse</li>
-              <li>3 illustrations / histoire</li>
-              <li>Bibliothèque famille (3 enfants)</li>
-              <li>Téléchargement PDF</li>
-              <li class="off">Mode hors-ligne</li>
-            </ul>
-            <button class="pbtn fb"
-              onclick="window.location.href='auth.html'">
-              Choisir Famille
-            </button>
-          </div>
-        </div>
-
-        <!-- PLAN 3 — PREMIUM -->
-        <div class="plan-slide">
-          <div class="pcard reveal">
-            <div class="plan-icon">👑</div>
-            <p class="pname">Premium</p>
-            <p class="pprice" id="pp">
-              <sup>€</sup>19<span class="per">,99 / mois</span>
-            </p>
-            <p class="pdesc">
-              Pour les familles nombreuses et les créatifs exigeants.
-            </p>
-            <ul class="pfeats">
-              <li>Histoires illimitées</li>
-              <li>Narration audio HD</li>
-              <li>5 illustrations / histoire</li>
-              <li>Enfants illimités</li>
-              <li>Téléchargement PDF + MP3</li>
-              <li>Mode hors-ligne</li>
-            </ul>
-            <button class="pbtn"
-              onclick="window.location.href='auth.html'">
-              Choisir Premium
-            </button>
-          </div>
-        </div>
-
-      </div><!-- end track -->
-
-      <!-- Dots navigation -->
-      <div class="plans-dots" id="plansDots">
-        <button class="plan-dot active" data-i="0"></button>
-        <button class="plan-dot" data-i="1"></button>
-        <button class="plan-dot" data-i="2"></button>
+        <div class="fc-period">Pour toujours</div>
+        <ul class="fc-feats">
+          <li class="on">✓ 1 histoire offerte</li>
+          <li class="on">✓ Audio inclus</li>
+          <li class="on">✓ 1 illustration</li>
+          <li class="off">✗ Histoires illimitées</li>
+          <li class="off">✗ Bibliothèque</li>
+        </ul>
+        <button class="fc-btn"
+          onclick="window.location.href='create.html'">
+          Essayer gratuitement
+        </button>
       </div>
 
-      <!-- Flèches (desktop) -->
-      <button class="plans-arrow plans-prev" id="plansPrev">‹</button>
-      <button class="plans-arrow plans-next" id="plansNext">›</button>
+      <!-- Plan 1 — Famille (featured) -->
+      <div class="fc-card featured" data-index="1">
+        <div class="fc-popular">⭐ Le plus populaire</div>
+        <div class="fc-icon">👨‍👩‍👧</div>
+        <div class="fc-badge-plan">Famille</div>
+        <div class="fc-price">
+          <span class="fc-currency">€</span>
+          <span class="fc-amount" id="fcPriceFamille">9,99</span>
+        </div>
+        <div class="fc-period" id="fcPeriodFamille">par mois</div>
+        <ul class="fc-feats">
+          <li class="on">✓ Histoires illimitées</li>
+          <li class="on">✓ Voix clonée</li>
+          <li class="on">✓ 3 illustrations</li>
+          <li class="on">✓ Bibliothèque (3 enfants)</li>
+          <li class="on">✓ PDF téléchargeable</li>
+        </ul>
+        <button class="fc-btn gold"
+          onclick="window.location.href='auth.html'">
+          Choisir Famille ✨
+        </button>
+      </div>
 
-    </div><!-- end carousel wrap -->
+      <!-- Plan 2 — Premium -->
+      <div class="fc-card" data-index="2">
+        <div class="fc-icon">👑</div>
+        <div class="fc-badge-plan">Premium</div>
+        <div class="fc-price">
+          <span class="fc-currency">€</span>
+          <span class="fc-amount" id="fcPricePremium">19,99</span>
+        </div>
+        <div class="fc-period" id="fcPeriodPremium">par mois</div>
+        <ul class="fc-feats">
+          <li class="on">✓ Tout illimité</li>
+          <li class="on">✓ Audio HD</li>
+          <li class="on">✓ 5 illustrations</li>
+          <li class="on">✓ Enfants illimités</li>
+          <li class="on">✓ PDF + MP3 + Hors-ligne</li>
+        </ul>
+        <button class="fc-btn"
+          onclick="window.location.href='auth.html'">
+          Choisir Premium
+        </button>
+      </div>
 
-    <!-- Note sécurité -->
-    <p class="reveal" style="text-align:center;font-size:.8rem;
-       color:var(--muted);margin-top:28px;">
-      🔒 Paiement sécurisé · Résiliable à tout moment · Sans engagement
+    </div><!-- end fc-wrap -->
+
+    <!-- Indicateur sélection -->
+    <div class="fc-indicator" id="fcIndicator">
+      <div class="fc-ind-dot active" data-i="0"></div>
+      <div class="fc-ind-dot" data-i="1"></div>
+      <div class="fc-ind-dot" data-i="2"></div>
+    </div>
+
+    <!-- Label plan actif -->
+    <p class="fc-selected-label" id="fcLabel">
+      ✨ Plan <strong>Famille</strong> sélectionné
+    </p>
+
+    <!-- Note -->
+    <p style="text-align:center;font-size:.78rem;
+       color:var(--muted);margin-top:16px;">
+      🔒 Paiement sécurisé Stripe · Résiliable à tout moment
     </p>
 
   </div>
@@ -2113,99 +2327,76 @@ window.showToast = function(type, msg, dur=3500) {
   });
 })();
 
-/* PLANS CAROUSEL ────────────────────────────────────── */
+/* ══ FOCUS CAROUSEL PRICING ══════════════════ */
 (function() {
-  const track  = document.getElementById('plansTrack');
-  const dots   = document.querySelectorAll('.plan-dot');
-  const prev   = document.getElementById('plansPrev');
-  const next   = document.getElementById('plansNext');
-  if (!track) return;
+  const cards   = document.querySelectorAll('.fc-card');
+  const dots    = document.querySelectorAll('.fc-ind-dot');
+  const label   = document.getElementById('fcLabel');
+  if (!cards.length) return;
+  const NAMES = ['Découverte', 'Famille', 'Premium'];
+  let current = 1;
+  let startX  = 0;
+  let isAnimating = false;
 
-  const slides = track.querySelectorAll('.plan-slide');
-  let current  = 1; // Démarre sur "Famille"
-  let startX   = 0;
-  let isDragging = false;
-
-  function getVisibleCount() {
-    if (window.innerWidth >= 900) return 3;
-    if (window.innerWidth >= 600) return 2;
-    return 1;
-  }
-
-  function goTo(i) {
-    const visible = getVisibleCount();
-    const max = slides.length - visible;
-    current = Math.max(0, Math.min(i, max));
-
-    if (visible >= 3) {
-      track.style.transform = 'none';
-    } else {
-      const slideW = slides[0].offsetWidth;
-      const gap = visible === 1 ? 16 : 24;
-      track.style.transform =
-        `translateX(-${current * (slideW + gap)}px)`;
-    }
-
+  function activate(i) {
+    if (isAnimating) return;
+    isAnimating = true;
+    current = ((i % 3) + 3) % 3;
+    cards.forEach((c, j) => c.classList.toggle('active', j === current));
     dots.forEach((d, j) => d.classList.toggle('active', j === current));
-    if (prev) prev.disabled = current <= 0;
-    if (next) next.disabled = current >= slides.length - visible;
+    if (label) {
+      label.innerHTML = current === 0
+        ? '🌱 Plan <strong>Découverte</strong> sélectionné — Gratuit !'
+        : current === 1
+        ? '✨ Plan <strong>Famille</strong> sélectionné'
+        : '👑 Plan <strong>Premium</strong> sélectionné';
+    }
+    setTimeout(() => { isAnimating = false; }, 400);
   }
 
-  window.addEventListener('resize', () => goTo(current));
-  setTimeout(() => goTo(1), 100);
+  activate(1);
 
-  if (prev) prev.addEventListener('click', () => goTo(current - 1));
-  if (next) next.addEventListener('click', () => goTo(current + 1));
+  cards.forEach((c, j) => { c.addEventListener('click', () => { if (j !== current) activate(j); }); });
+  dots.forEach(d => { d.addEventListener('click', () => activate(+d.dataset.i)); });
 
-  dots.forEach(d => {
-    d.addEventListener('click', () => goTo(+d.dataset.i));
+  const wrap = document.getElementById('fcWrap');
+  if (wrap) {
+    wrap.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    wrap.addEventListener('touchend', e => {
+      const dx = startX - e.changedTouches[0].clientX;
+      if (Math.abs(dx) > 45) activate(dx > 0 ? current + 1 : current - 1);
+    }, { passive: true });
+  }
+
+  document.addEventListener('keydown', e => {
+    const section = document.getElementById('pricing');
+    if (!section) return;
+    const rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      if (e.key === 'ArrowRight') activate(current + 1);
+      if (e.key === 'ArrowLeft')  activate(current - 1);
+    }
   });
 
-  // Swipe tactile
-  track.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    isDragging = true;
-  }, { passive: true });
-
-  track.addEventListener('touchend', e => {
-    if (!isDragging) return;
-    const dx = startX - e.changedTouches[0].clientX;
-    if (Math.abs(dx) > 50) goTo(dx > 0 ? current + 1 : current - 1);
-    isDragging = false;
-  }, { passive: true });
-
-  // Drag souris
-  track.addEventListener('mousedown', e => {
-    startX = e.clientX;
-    isDragging = true;
-  });
-  track.addEventListener('mouseup', e => {
-    if (!isDragging) return;
-    const dx = startX - e.clientX;
-    if (Math.abs(dx) > 60) goTo(dx > 0 ? current + 1 : current - 1);
-    isDragging = false;
-  });
-
-  // Pricing toggle mensuel/annuel
-  const pts2 = document.getElementById('pts');
-  const plm  = document.getElementById('plm');
-  const pla  = document.getElementById('pla');
-  const pf   = document.getElementById('pf');
-  const pp   = document.getElementById('pp');
+  const pts = document.getElementById('pts');
+  const plm = document.getElementById('plm');
+  const pla = document.getElementById('pla');
   let ann = false;
 
-  if (pts2) {
-    pts2.addEventListener('click', () => {
+  if (pts) {
+    pts.addEventListener('click', () => {
       ann = !ann;
-      pts2.classList.toggle('ann', ann);
+      pts.classList.toggle('ann', ann);
       plm.classList.toggle('on', !ann);
       pla.classList.toggle('on', ann);
-      if (pf) pf.innerHTML = ann
-        ? '<sup>€</sup>7<span class="per">,99 / mois</span>'
-        : '<sup>€</sup>9<span class="per">,99 / mois</span>';
-      if (pp) pp.innerHTML = ann
-        ? '<sup>€</sup>15<span class="per">,99 / mois</span>'
-        : '<sup>€</sup>19<span class="per">,99 / mois</span>';
+      const pf  = document.getElementById('fcPriceFamille');
+      const pp  = document.getElementById('fcPricePremium');
+      const pf2 = document.getElementById('fcPeriodFamille');
+      const pp2 = document.getElementById('fcPeriodPremium');
+      if (pf)  pf.textContent  = ann ? '7,99'  : '9,99';
+      if (pp)  pp.textContent  = ann ? '15,99' : '19,99';
+      if (pf2) pf2.textContent = ann ? 'par mois (–20%)' : 'par mois';
+      if (pp2) pp2.textContent = ann ? 'par mois (–20%)' : 'par mois';
     });
   }
 })();
