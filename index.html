@@ -928,6 +928,263 @@
   .pname { color:rgba(232,232,240,0.72) !important; }
   .pdesc { color:rgba(232,232,240,0.72) !important; }
   .pbtn:not(.fb) { color:#9B94FF !important; border-color:#9B94FF !important; }
+
+  /* PLANS CAROUSEL ────────────────────────────────────── */
+
+  .plans-carousel-wrap {
+    position: relative;
+    overflow: hidden;
+    padding: 20px 0 56px;
+  }
+
+  .plans-track {
+    display: flex;
+    gap: 24px;
+    transition: transform .5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px 0;
+    will-change: transform;
+  }
+
+  .plan-slide {
+    flex: 0 0 calc(33.333% - 16px);
+    min-width: 280px;
+  }
+
+  /* Card plan */
+  .pcard {
+    background: var(--card);
+    border: 1px solid var(--cborder);
+    border-radius: var(--r);
+    padding: 36px 28px;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform .35s cubic-bezier(0.34,1.56,0.64,1),
+                box-shadow .35s ease;
+  }
+
+  .pcard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 60px rgba(108,99,255,.22);
+  }
+
+  /* Icône plan */
+  .plan-icon {
+    font-size: 2.4rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  /* Plan featured */
+  .pcard.feat {
+    background: linear-gradient(145deg,
+      rgba(108,99,255,.14), rgba(26,26,46,.9));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+    transform: scale(1.04);
+    box-shadow: 0 0 0 2px #6C63FF,
+                0 28px 80px rgba(108,99,255,.35);
+  }
+
+  .pcard.feat:hover {
+    transform: scale(1.04) translateY(-8px);
+  }
+
+  /* Badge populaire */
+  .pbadge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--v), #9b8fff);
+    color: #fff;
+    padding: 5px 20px;
+    border-radius: 50px;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(108,99,255,.4);
+  }
+
+  /* Prix */
+  .pprice {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  .pprice sup {
+    font-size: 1.1rem;
+    vertical-align: super;
+  }
+  .pprice .per {
+    font-size: .9rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Features list */
+  .pfeats {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 18px 0 24px;
+    flex: 1;
+  }
+  .pfeats li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: .86rem;
+    color: rgba(232,232,240,.85);
+  }
+  .pfeats li::before {
+    content: "✓";
+    color: var(--v);
+    font-weight: 700;
+    flex-shrink: 0;
+    width: 16px;
+  }
+  .pfeats li.off {
+    opacity: .35;
+    text-decoration: line-through;
+  }
+  .pfeats li.off::before {
+    content: "✗";
+    color: #666;
+  }
+
+  /* Bouton plan */
+  .pbtn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 50px;
+    font-family: 'Baloo 2', cursive;
+    font-size: .97rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid var(--v);
+    background: transparent;
+    color: #9B94FF;
+    transition: all .2s;
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
+  }
+  .pbtn:hover {
+    background: var(--v);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+  .pbtn.fb {
+    background: var(--v);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(108,99,255,.35);
+  }
+  .pbtn.fb:hover {
+    background: #5548e0;
+    box-shadow: 0 10px 28px rgba(108,99,255,.5);
+  }
+
+  /* Shimmer bouton */
+  .pbtn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    background: linear-gradient(90deg,
+      transparent, rgba(255,255,255,.18), transparent);
+    transform: translateX(-100%);
+    transition: transform .5s;
+  }
+  .pbtn:hover::after { transform: translateX(100%); }
+
+  /* Dots navigation */
+  .plans-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 28px;
+  }
+  .plan-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,.2);
+    cursor: pointer;
+    transition: all .3s;
+    padding: 0;
+  }
+  .plan-dot.active {
+    background: var(--v);
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  /* Flèches desktop */
+  .plans-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-60%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(26,26,46,.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.12);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+  .plans-arrow:hover {
+    background: rgba(108,99,255,.4);
+    border-color: var(--v);
+  }
+  .plans-prev { left: -8px; }
+  .plans-next { right: -8px; }
+
+  /* Desktop : 3 plans côte à côte */
+  @media (min-width: 900px) {
+    .plans-carousel-wrap { overflow: visible; }
+    .plans-track { transform: none !important; }
+    .plans-arrow { display: none; }
+    .plans-dots { display: none; }
+    .plan-slide { flex: 1; min-width: 0; }
+  }
+
+  /* Tablet : 2 plans */
+  @media (max-width: 899px) and (min-width: 600px) {
+    .plan-slide { flex: 0 0 calc(50% - 12px); }
+    .plans-prev { left: -4px; }
+    .plans-next { right: -4px; }
+  }
+
+  /* Mobile : 1 plan + swipe */
+  @media (max-width: 599px) {
+    .plans-carousel-wrap { padding: 20px 0 52px; }
+    .plan-slide {
+      flex: 0 0 calc(100% - 32px);
+      min-width: calc(100% - 32px);
+    }
+    .plans-track { gap: 16px; padding: 20px 16px; }
+    .pcard.feat { transform: scale(1); }
+    .pcard.feat:hover { transform: translateY(-6px); }
+    .plans-prev { left: 4px; }
+    .plans-next { right: 4px; }
+  }
+
   </style>
 </head>
 <body>
@@ -1215,14 +1472,23 @@
 <!-- ══ 8. TARIFS ══════════════════════════════════════════ -->
 <section id="pricing">
   <div class="si">
+
+    <!-- Header -->
     <div class="reveal" style="text-align:center">
       <span class="stag">Tarifs</span>
       <h2 class="stitle">Commencez <span style="color:var(--v)">gratuitement</span></h2>
-      <p class="ssub" style="margin:0 auto 30px">Sans carte bancaire. Annulez quand vous voulez.</p>
+      <p class="ssub" style="margin:0 auto 30px">
+        Sans carte bancaire. Annulez quand vous voulez.
+      </p>
     </div>
+
+    <!-- Bannière promo -->
     <div class="price-banner reveal">
-      🎁 <em>1ère histoire offerte</em> pour chaque nouveau compte — sans engagement, sans carte bancaire.
+      🎁 <em>1ère histoire offerte</em> pour chaque nouveau compte
+      — sans engagement, sans carte bancaire.
     </div>
+
+    <!-- Toggle mensuel/annuel -->
     <div class="ptoggle reveal">
       <span class="ptlabel on" id="plm">Mensuel</span>
       <button class="tswitch" id="pts" aria-label="Basculer mensuel/annuel">
@@ -1231,51 +1497,109 @@
       <span class="ptlabel" id="pla">Annuel</span>
       <span class="tbadge">–20%</span>
     </div>
-    <div class="pgrid">
-      <div class="pcard reveal">
-        <p class="pname">Découverte</p>
-        <p class="pprice"><sup>€</sup>0</p>
-        <p class="pdesc">Pour essayer la magie TinyTale sans engagement.</p>
-        <ul class="pfeats">
-          <li>1 histoire offerte</li>
-          <li>Narration audio incluse</li>
-          <li>1 illustration</li>
-          <li class="off">Histoires illimitées</li>
-          <li class="off">Bibliothèque famille</li>
-          <li class="off">Mode hors-ligne</li>
-        </ul>
-        <button class="pbtn" onclick="window.location.href='create.html'">Commencer gratuitement</button> <!-- ✅ FIX BUG 2 -->
+
+    <!-- CARROUSEL PLANS -->
+    <div class="plans-carousel-wrap">
+
+      <!-- Track glissant -->
+      <div class="plans-track" id="plansTrack">
+
+        <!-- PLAN 1 — GRATUIT -->
+        <div class="plan-slide">
+          <div class="pcard reveal">
+            <div class="plan-icon">🌱</div>
+            <p class="pname">Découverte</p>
+            <p class="pprice"><sup>€</sup>0</p>
+            <p class="pdesc">Pour essayer la magie TinyTale sans engagement.</p>
+            <ul class="pfeats">
+              <li>1 histoire offerte</li>
+              <li>Narration audio incluse</li>
+              <li>1 illustration</li>
+              <li class="off">Histoires illimitées</li>
+              <li class="off">Bibliothèque famille</li>
+              <li class="off">Mode hors-ligne</li>
+            </ul>
+            <button class="pbtn"
+              onclick="window.location.href='create.html'">
+              Commencer gratuitement
+            </button>
+          </div>
+        </div>
+
+        <!-- PLAN 2 — FAMILLE (featured) -->
+        <div class="plan-slide">
+          <div class="pcard feat reveal">
+            <div class="pbadge">⭐ Le plus populaire</div>
+            <div class="plan-icon">👨‍👩‍👧</div>
+            <p class="pname">Famille</p>
+            <p class="pprice" id="pf">
+              <sup>€</sup>9<span class="per">,99 / mois</span>
+            </p>
+            <p class="pdesc">
+              Le choix parfait pour les familles avec 1 à 3 enfants.
+            </p>
+            <ul class="pfeats">
+              <li>Histoires illimitées</li>
+              <li>Narration audio incluse</li>
+              <li>3 illustrations / histoire</li>
+              <li>Bibliothèque famille (3 enfants)</li>
+              <li>Téléchargement PDF</li>
+              <li class="off">Mode hors-ligne</li>
+            </ul>
+            <button class="pbtn fb"
+              onclick="window.location.href='auth.html'">
+              Choisir Famille
+            </button>
+          </div>
+        </div>
+
+        <!-- PLAN 3 — PREMIUM -->
+        <div class="plan-slide">
+          <div class="pcard reveal">
+            <div class="plan-icon">👑</div>
+            <p class="pname">Premium</p>
+            <p class="pprice" id="pp">
+              <sup>€</sup>19<span class="per">,99 / mois</span>
+            </p>
+            <p class="pdesc">
+              Pour les familles nombreuses et les créatifs exigeants.
+            </p>
+            <ul class="pfeats">
+              <li>Histoires illimitées</li>
+              <li>Narration audio HD</li>
+              <li>5 illustrations / histoire</li>
+              <li>Enfants illimités</li>
+              <li>Téléchargement PDF + MP3</li>
+              <li>Mode hors-ligne</li>
+            </ul>
+            <button class="pbtn"
+              onclick="window.location.href='auth.html'">
+              Choisir Premium
+            </button>
+          </div>
+        </div>
+
+      </div><!-- end track -->
+
+      <!-- Dots navigation -->
+      <div class="plans-dots" id="plansDots">
+        <button class="plan-dot active" data-i="0"></button>
+        <button class="plan-dot" data-i="1"></button>
+        <button class="plan-dot" data-i="2"></button>
       </div>
-      <div class="pcard feat reveal" style="transition-delay:.14s">
-        <div class="pbadge">⭐ Le plus populaire</div>
-        <p class="pname">Famille</p>
-        <p class="pprice" id="pf"><sup>€</sup>9<span class="per">,99 / mois</span></p>
-        <p class="pdesc">Le choix parfait pour les familles avec 1 à 3 enfants.</p>
-        <ul class="pfeats">
-          <li>Histoires illimitées</li>
-          <li>Narration audio incluse</li>
-          <li>3 illustrations / histoire</li>
-          <li>Bibliothèque famille (3 enfants)</li>
-          <li>Téléchargement PDF</li>
-          <li class="off">Mode hors-ligne</li>
-        </ul>
-        <button class="pbtn fb" onclick="window.location.href='auth.html'">Choisir Famille</button> <!-- ✅ FIX BUG 2 -->
-      </div>
-      <div class="pcard reveal" style="transition-delay:.28s">
-        <p class="pname">Premium</p>
-        <p class="pprice" id="pp"><sup>€</sup>19<span class="per">,99 / mois</span></p>
-        <p class="pdesc">Pour les familles nombreuses et les créatifs exigeants.</p>
-        <ul class="pfeats">
-          <li>Histoires illimitées</li>
-          <li>Narration audio HD</li>
-          <li>5 illustrations / histoire</li>
-          <li>Enfants illimités</li>
-          <li>Téléchargement PDF + MP3</li>
-          <li>Mode hors-ligne</li>
-        </ul>
-        <button class="pbtn" onclick="window.location.href='auth.html'">Choisir Premium</button> <!-- ✅ FIX BUG 2 -->
-      </div>
-    </div>
+
+      <!-- Flèches (desktop) -->
+      <button class="plans-arrow plans-prev" id="plansPrev">‹</button>
+      <button class="plans-arrow plans-next" id="plansNext">›</button>
+
+    </div><!-- end carousel wrap -->
+
+    <!-- Note sécurité -->
+    <p class="reveal" style="text-align:center;font-size:.8rem;
+       color:var(--muted);margin-top:28px;">
+      🔒 Paiement sécurisé · Résiliable à tout moment · Sans engagement
+    </p>
+
   </div>
 </section>
 
@@ -1787,6 +2111,103 @@ window.showToast = function(type, msg, dur=3500) {
       setTimeout(()=>{ window.location.href=href; },290);
     });
   });
+})();
+
+/* PLANS CAROUSEL ────────────────────────────────────── */
+(function() {
+  const track  = document.getElementById('plansTrack');
+  const dots   = document.querySelectorAll('.plan-dot');
+  const prev   = document.getElementById('plansPrev');
+  const next   = document.getElementById('plansNext');
+  if (!track) return;
+
+  const slides = track.querySelectorAll('.plan-slide');
+  let current  = 1; // Démarre sur "Famille"
+  let startX   = 0;
+  let isDragging = false;
+
+  function getVisibleCount() {
+    if (window.innerWidth >= 900) return 3;
+    if (window.innerWidth >= 600) return 2;
+    return 1;
+  }
+
+  function goTo(i) {
+    const visible = getVisibleCount();
+    const max = slides.length - visible;
+    current = Math.max(0, Math.min(i, max));
+
+    if (visible >= 3) {
+      track.style.transform = 'none';
+    } else {
+      const slideW = slides[0].offsetWidth;
+      const gap = visible === 1 ? 16 : 24;
+      track.style.transform =
+        `translateX(-${current * (slideW + gap)}px)`;
+    }
+
+    dots.forEach((d, j) => d.classList.toggle('active', j === current));
+    if (prev) prev.disabled = current <= 0;
+    if (next) next.disabled = current >= slides.length - visible;
+  }
+
+  window.addEventListener('resize', () => goTo(current));
+  setTimeout(() => goTo(1), 100);
+
+  if (prev) prev.addEventListener('click', () => goTo(current - 1));
+  if (next) next.addEventListener('click', () => goTo(current + 1));
+
+  dots.forEach(d => {
+    d.addEventListener('click', () => goTo(+d.dataset.i));
+  });
+
+  // Swipe tactile
+  track.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  }, { passive: true });
+
+  track.addEventListener('touchend', e => {
+    if (!isDragging) return;
+    const dx = startX - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 50) goTo(dx > 0 ? current + 1 : current - 1);
+    isDragging = false;
+  }, { passive: true });
+
+  // Drag souris
+  track.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    isDragging = true;
+  });
+  track.addEventListener('mouseup', e => {
+    if (!isDragging) return;
+    const dx = startX - e.clientX;
+    if (Math.abs(dx) > 60) goTo(dx > 0 ? current + 1 : current - 1);
+    isDragging = false;
+  });
+
+  // Pricing toggle mensuel/annuel
+  const pts2 = document.getElementById('pts');
+  const plm  = document.getElementById('plm');
+  const pla  = document.getElementById('pla');
+  const pf   = document.getElementById('pf');
+  const pp   = document.getElementById('pp');
+  let ann = false;
+
+  if (pts2) {
+    pts2.addEventListener('click', () => {
+      ann = !ann;
+      pts2.classList.toggle('ann', ann);
+      plm.classList.toggle('on', !ann);
+      pla.classList.toggle('on', ann);
+      if (pf) pf.innerHTML = ann
+        ? '<sup>€</sup>7<span class="per">,99 / mois</span>'
+        : '<sup>€</sup>9<span class="per">,99 / mois</span>';
+      if (pp) pp.innerHTML = ann
+        ? '<sup>€</sup>15<span class="per">,99 / mois</span>'
+        : '<sup>€</sup>19<span class="per">,99 / mois</span>';
+    });
+  }
 })();
 </script>
 </body>
