@@ -18,9 +18,10 @@
   <link rel="dns-prefetch" href="https://www.gstatic.com">
   <title>TinyTale – Histoires magiques personnalisées pour enfants</title>
   <script src="config.js"></script>
-  <!-- ✅ FIX BUG 3 & 9 — Firebase compat SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <!-- ✅ Firebase compat SDK v10.12 -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -2356,47 +2357,67 @@ tt.addEventListener('touchend', e => {
   if (Math.abs(dx) > 48) goTo(cur + (dx > 0 ? 1 : -1));
 });
 
-/* ─── FIREBASE AUTH STATE ─────────────────────────────── */ // ✅ FIX BUG 3 & 9
-(function() {
-  const cfg = TINYTALE_CONFIG.FIREBASE;
+// ✅ FIREBASE CONNECTÉ
+// ── FIREBASE INIT ──────────────────────────
+function initFirebase() {
+  const cfg = typeof TINYTALE_CONFIG !== 'undefined'
+    ? TINYTALE_CONFIG.FIREBASE
+    : null;
   const firebaseConfig = {
-    apiKey:            cfg.API_KEY,
-    authDomain:        cfg.AUTH_DOMAIN,
-    projectId:         cfg.PROJECT_ID,
-    storageBucket:     cfg.STORAGE_BUCKET,
-    messagingSenderId: cfg.MESSAGING_SENDER_ID,
-    appId:             cfg.APP_ID,
+    apiKey:            cfg?.API_KEY            || "AIzaSyCl4DaUOML2JqXcfOzpM5TobnLGBjFCasg",
+    authDomain:        cfg?.AUTH_DOMAIN        || "tinytale-4203f.firebaseapp.com",
+    databaseURL:       cfg?.DATABASE_URL       || "https://tinytale-4203f-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         cfg?.PROJECT_ID         || "tinytale-4203f",
+    storageBucket:     cfg?.STORAGE_BUCKET     || "tinytale-4203f.firebasestorage.app",
+    messagingSenderId: cfg?.MESSAGING_SENDER_ID || "35404819260",
+    appId:             cfg?.APP_ID             || "1:35404819260:web:5589de686180161dc78c39",
+    measurementId:     cfg?.MEASUREMENT_ID     || "G-Q5K5DB575X",
   };
-  const app  = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+  const app = firebase.apps.length
+    ? firebase.app()
+    : firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(app);
+  const db   = firebase.firestore(app);
+  return { app, auth, db };
+}
+const { auth, db } = initFirebase();
 
-  auth.onAuthStateChanged(user => {
-    const out = document.getElementById('nav-logged-out');
-    const inn = document.getElementById('nav-logged-in');
-    if (user) {
-      out.style.display = 'none';
-      inn.style.display = 'flex';
-      const letter = (user.displayName || user.email || '?')[0].toUpperCase();
-      document.getElementById('nav-avatar-letter').textContent = letter;
-    } else {
-      out.style.display = 'flex';
-      inn.style.display = 'none';
+auth.onAuthStateChanged(user => {
+  const out = document.getElementById('nav-logged-out');
+  const inn = document.getElementById('nav-logged-in');
+  if (!out || !inn) return;
+  if (user) {
+    out.style.display = 'none';
+    inn.style.display = 'flex';
+    const av = document.getElementById('nav-avatar-letter');
+    if (av) {
+      if (user.photoURL) {
+        av.parentElement.innerHTML =
+          `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="Avatar">`;
+      } else {
+        av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
+      }
     }
-  });
+  } else {
+    out.style.display = 'flex';
+    inn.style.display = 'none';
+  }
+});
 
-  window.toggleUserMenu = function() {
-    document.getElementById('nav-user-menu').classList.toggle('open');
-  };
-  document.addEventListener('click', e => {
-    const menu = document.getElementById('nav-user-menu');
-    if (menu && !document.getElementById('nav-avatar').contains(e.target)) {
-      menu.classList.remove('open');
-    }
-  });
-  window.signOutUser = function() {
-    auth.signOut().then(() => { window.location.href = 'index.html'; });
-  };
-})();
+async function signOutUser() {
+  try { await auth.signOut(); window.location.href = 'index.html'; }
+  catch(e) { console.warn(e); }
+}
+
+window.toggleUserMenu = function() {
+  document.getElementById('nav-user-menu').classList.toggle('open');
+};
+document.addEventListener('click', e => {
+  const menu = document.getElementById('nav-user-menu');
+  if (menu && !document.getElementById('nav-avatar').contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
 
 /* ✅ AMÉLIORATION 6 — Toast notifications premium */
 window.showToast = function(type, msg, dur=3500) {

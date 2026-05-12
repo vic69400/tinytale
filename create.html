@@ -15,9 +15,9 @@
   <title>Créer une histoire – TinyTale</title>
   <script src="config.js"></script>
   <!-- ✅ FIX BUG 5 & 9 — Firebase compat SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1718,73 +1718,80 @@ async function genererHistoire() {
   window.location.href = 'book.html';
 }
 
-/* ─── FIREBASE INIT & SAVE ────────────────────────────── */ // ✅ FIX BUG 5 & 9
-(function() {
-  const cfg = TINYTALE_CONFIG.FIREBASE;
+// ✅ FIREBASE CONNECTÉ
+// ── FIREBASE INIT ──────────────────────────
+function initFirebase() {
+  const cfg = typeof TINYTALE_CONFIG !== 'undefined'
+    ? TINYTALE_CONFIG.FIREBASE
+    : null;
   const firebaseConfig = {
-    apiKey:            cfg.API_KEY,
-    authDomain:        cfg.AUTH_DOMAIN,
-    projectId:         cfg.PROJECT_ID,
-    storageBucket:     cfg.STORAGE_BUCKET,
-    messagingSenderId: cfg.MESSAGING_SENDER_ID,
-    appId:             cfg.APP_ID,
+    apiKey:            cfg?.API_KEY            || "AIzaSyCl4DaUOML2JqXcfOzpM5TobnLGBjFCasg",
+    authDomain:        cfg?.AUTH_DOMAIN        || "tinytale-4203f.firebaseapp.com",
+    databaseURL:       cfg?.DATABASE_URL       || "https://tinytale-4203f-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         cfg?.PROJECT_ID         || "tinytale-4203f",
+    storageBucket:     cfg?.STORAGE_BUCKET     || "tinytale-4203f.firebasestorage.app",
+    messagingSenderId: cfg?.MESSAGING_SENDER_ID || "35404819260",
+    appId:             cfg?.APP_ID             || "1:35404819260:web:5589de686180161dc78c39",
+    measurementId:     cfg?.MEASUREMENT_ID     || "G-Q5K5DB575X",
   };
-  const app  = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+  const app = firebase.apps.length
+    ? firebase.app()
+    : firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth(app);
   const db   = firebase.firestore(app);
+  return { app, auth, db };
+}
+const { auth, db } = initFirebase();
 
-  // ✅ FIX CORRECTION 1 — Auth state navbar create.html
-  auth.onAuthStateChanged(user => {
-    const out = document.getElementById('nav-logged-out-create');
-    const inn = document.getElementById('nav-logged-in-create');
-    if (!out || !inn) return;
-    if (user) {
-      out.style.display = 'none';
-      inn.style.display = 'flex';
-      const av = document.getElementById('nav-avatar-create');
-      if (av) {
-        if (user.photoURL) {
-          av.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" alt="">`;
-        } else {
-          av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
-        }
+auth.onAuthStateChanged(user => {
+  const out = document.getElementById('nav-logged-out-create');
+  const inn = document.getElementById('nav-logged-in-create');
+  if (!out || !inn) return;
+  if (user) {
+    out.style.display = 'none';
+    inn.style.display = 'flex';
+    const av = document.getElementById('nav-avatar-create');
+    if (av) {
+      if (user.photoURL) {
+        av.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" alt="">`;
+      } else {
+        av.textContent = (user.displayName || user.email || '?')[0].toUpperCase();
       }
-    } else {
-      out.style.display = 'block';
-      inn.style.display = 'none';
     }
-  });
+  } else {
+    out.style.display = 'block';
+    inn.style.display = 'none';
+  }
+});
 
-  window.signOutCreate = async function() {
-    try { await auth.signOut(); window.location.href = 'index.html'; }
-    catch(e) { console.warn(e); }
-  };
-
-  // close menu on outside click
-  document.addEventListener('click', e => {
-    const menu = document.getElementById('nav-menu-create');
-    const av   = document.getElementById('nav-avatar-create');
-    if (menu && av && !av.contains(e.target)) menu.style.display = 'none';
-  });
-
-  window.saveHistoireToFirestore = async function(data) {
-    const user = auth.currentUser;
-    if (!user) return; // utilisateur non connecté — on skip silencieusement
-    try {
-      await db.collection('users').doc(user.uid).collection('histoires').add({
+window.saveHistoireToFirestore = async function(data) {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    await db.collection('users').doc(user.uid)
+      .collection('histoires').add({
         ...data,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        progress:  0,
+        ecoutes:   0,
       });
-      // Décrémenter le compteur de crédits si la logique métier l'exige
-      await db.collection('users').doc(user.uid).set(
-        { histoiresRestantes: firebase.firestore.FieldValue.increment(-1) },
-        { merge: true }
-      );
-    } catch (e) {
-      console.warn('Firestore save skipped:', e.message);
-    }
-  };
-})();
+    await db.collection('users').doc(user.uid).set(
+      { histoiresRestantes: firebase.firestore.FieldValue.increment(-1) },
+      { merge: true }
+    );
+  } catch(e) { console.warn('Firestore save:', e.message); }
+};
+
+async function signOutCreate() {
+  await auth.signOut();
+  window.location.href = 'index.html';
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('nav-menu-create');
+  const av   = document.getElementById('nav-avatar-create');
+  if (menu && av && !av.contains(e.target)) menu.style.display = 'none';
+});
 
 /* ✅ AMÉLIORATION 6 — Toast notifications premium */
 window.showToast = function(type, msg, dur=3500) {

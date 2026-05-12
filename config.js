@@ -202,6 +202,7 @@ Langue : {langue}.`,
   FIREBASE: {
     API_KEY:             "AIzaSyCl4DaUOML2JqXcfOzpM5TobnLGBjFCasg",
     AUTH_DOMAIN:         "tinytale-4203f.firebaseapp.com",
+    DATABASE_URL:        "https://tinytale-4203f-default-rtdb.europe-west1.firebasedatabase.app",
     PROJECT_ID:          "tinytale-4203f",
     STORAGE_BUCKET:      "tinytale-4203f.firebasestorage.app",
     MESSAGING_SENDER_ID: "35404819260",
