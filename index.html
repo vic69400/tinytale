@@ -488,29 +488,62 @@
     }
     .price-banner em { color: var(--o); font-style: normal; }
 
-    .ptoggle {
-      display: flex; align-items: center; justify-content: center;
-      gap: 14px; margin-bottom: 46px;
-    }
-    .ptlabel { font-weight: 700; font-size: .93rem; color: var(--muted); transition: color .2s; }
-    .ptlabel.on { color: var(--txt); }
-
+    /* ✅ FIX CARROUSEL TAILLE */
     .tswitch {
-      position: relative; width: 56px; height: 28px;
-      background: var(--v); border-radius: 14px;
-      cursor: pointer; border: none;
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--v);
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      flex-shrink: 0;
+      transition: background 0.3s ease;
     }
+
     .tknob {
-      position: absolute; top: 4px; left: 4px;
-      width: 20px; height: 20px; background: #fff;
-      border-radius: 50%; transition: transform .3s cubic-bezier(.4,0,.2,1);
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     }
-    .tswitch.ann .tknob { transform: translateX(28px); }
+
+    .tswitch.ann .tknob {
+      transform: translateX(20px);
+    }
+
+    /* Badge -20% plus discret */
     .tbadge {
-      background: var(--ol); color: var(--o);
-      border: 1px solid rgba(255,209,102,.3);
-      padding: 3px 9px; border-radius: 50px; font-size: .72rem; font-weight: 700;
+      background: rgba(255,209,102,0.15);
+      color: var(--o);
+      border: 1px solid rgba(255,209,102,0.3);
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: .72rem;
+      font-weight: 700;
     }
+
+    /* Toggle row compact */
+    .ptoggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .ptlabel {
+      font-weight: 700;
+      font-size: .85rem;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .ptlabel.on { color: var(--txt); }
 
     .pgrid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; align-items: start; }
 
@@ -1194,55 +1227,54 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 24px 0 16px;
-    perspective: 1200px;
-    min-height: 0;
-    overflow: hidden;
-    width: 100%;
+    gap: 12px;
+    padding: 32px 0 16px;
+    overflow: visible;
     touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .fc-card {
-    position: relative;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(108,99,255,0.18);
+    flex: 0 0 100px;
+    width: 100px;
+    min-height: 200px;
     border-radius: 20px;
-    padding: 20px 16px;
+    padding: 20px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     cursor: pointer;
-    user-select: none;
-    flex-shrink: 0;
-    width: 96px;
-    opacity: 0.45;
-    transform: scale(0.88);
-    filter: brightness(0.6);
+    position: relative;
+    border: 1px solid rgba(108,99,255,0.15);
+    background: rgba(255,255,255,0.04);
+    transform: scale(0.85);
+    opacity: 0.42;
+    filter: brightness(0.58);
     transition:
-      width 0.5s cubic-bezier(0.34, 1.2, 0.64, 1),
-      opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1),
-      filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.5s ease,
-      border-color 0.5s ease,
-      background 0.5s ease;
-    will-change: transform, width, opacity;
-    z-index: 1;
+      transform  0.48s cubic-bezier(0.34,1.3,0.64,1),
+      opacity    0.38s ease,
+      filter     0.38s ease,
+      box-shadow 0.38s ease,
+      border-color 0.38s ease;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
   }
 
   .fc-card.active {
+    flex: 0 0 200px;
     width: 200px;
-    opacity: 1;
+    min-height: 320px;
     transform: scale(1);
+    opacity: 1;
     filter: none;
     z-index: 10;
-    box-shadow:
-      0 16px 48px rgba(108,99,255,0.4),
-      0 0 0 1.5px rgba(108,99,255,0.5);
-    border-color: rgba(108,99,255,0.6);
     cursor: default;
+    border-color: rgba(108,99,255,0.5);
+    box-shadow:
+      0 16px 48px rgba(108,99,255,0.35),
+      0 0 0 1.5px rgba(108,99,255,0.4);
   }
 
   .fc-card.featured.active {
@@ -1319,12 +1351,13 @@
     color: var(--o);
     margin-top: 4px;
   }
+  /* Prix plus compact */
   .fc-amount {
     font-family: 'Baloo 2', cursive;
-    font-size: 1.8rem;
+    font-size: 1.9rem;
     font-weight: 800;
     color: #fff;
-    transition: font-size 0.35s ease;
+    line-height: 1;
   }
   .fc-card.active .fc-amount { font-size: 2.4rem; }
 
@@ -1351,45 +1384,53 @@
     max-height: 200px;
     opacity: 1;
   }
-  .fc-feats li { font-size: .75rem; font-weight: 600; padding: 0 2px; }
+  /* Features taille réduite */
+  .fc-feats li { font-size: .74rem; font-weight: 600; padding: 0 2px; }
   .fc-feats li.on  { color: rgba(232,232,240,0.85); }
   .fc-feats li.off { color: rgba(232,232,240,0.25); text-decoration: line-through; }
 
+  /* Bouton CTA compact */
   .fc-btn {
     width: 100%;
+    padding: 11px;
     border-radius: 50px;
     font-family: 'Baloo 2', cursive;
-    font-size: .82rem;
+    font-size: .85rem;
     font-weight: 700;
     cursor: pointer;
     border: 1.5px solid rgba(108,99,255,0.5);
     background: transparent;
     color: #9B94FF;
-    transition: all 0.2s;
+    margin-top: auto;
     opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    padding: 0;
-    margin: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.3s ease 0.15s,
+      transform 0.35s cubic-bezier(0.34,1.2,0.64,1) 0.15s,
+      background 0.2s ease,
+      box-shadow 0.2s ease;
     pointer-events: none;
   }
   .fc-card.active .fc-btn {
     opacity: 1;
-    max-height: 48px;
-    padding: 10px;
-    margin-top: 0;
+    transform: translateY(0);
     pointer-events: auto;
   }
-  .fc-btn:hover { background: var(--v); color: #fff; border-color: var(--v); }
   .fc-btn.gold {
     background: var(--o);
     color: var(--n);
     border-color: var(--o);
-    box-shadow: 0 4px 16px rgba(255,209,102,.35);
+    box-shadow: 0 4px 16px rgba(255,209,102,.3);
+  }
+  .fc-btn:hover {
+    background: var(--v);
+    color: #fff;
+    border-color: var(--v);
   }
   .fc-btn.gold:hover {
     background: #E6B800;
-    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(255,209,102,.5);
+    transform: translateY(-1px) !important;
   }
 
   .fc-indicator {
@@ -1419,18 +1460,43 @@
   .fc-selected-label strong { color: var(--o); }
 
   @media (max-width: 480px) {
-    .fc-wrap { gap: 8px; }
-    .fc-card { width: 80px; padding: 16px 10px; }
-    .fc-card.active { width: 180px; }
-    .fc-amount { font-size: 1.6rem; }
+    .fc-wrap { gap: 8px; padding: 28px 0 14px; }
+    .fc-card {
+      flex: 0 0 88px;
+      width: 88px;
+      min-height: 180px;
+      padding: 16px 10px;
+      border-radius: 16px;
+    }
+    .fc-card.active {
+      flex: 0 0 186px;
+      width: 186px;
+      min-height: 300px;
+    }
+    .fc-amount { font-size: 1.7rem; }
     .fc-card.active .fc-amount { font-size: 2.1rem; }
+    .fc-icon { font-size: 1.5rem; }
+    .fc-badge-plan { font-size: 0.6rem; }
+    .fc-feats li { font-size: .7rem; }
+    .fc-btn { font-size: .8rem; padding: 10px; }
   }
 
-  @media (min-width: 900px) {
+  @media (max-width: 360px) {
+    .fc-card { flex: 0 0 76px; width: 76px; }
+    .fc-card.active { flex: 0 0 170px; width: 170px; }
+    .fc-amount { font-size: 1.5rem; }
+    .fc-card.active .fc-amount { font-size: 1.9rem; }
+  }
+
+  @media (min-width: 769px) {
     .fc-wrap { gap: 20px; }
-    .fc-card { width: 160px; }
-    .fc-card.active { width: 280px; }
-    .fc-card.active .fc-amount { font-size: 2.8rem; }
+    .fc-card { flex: 0 0 160px; width: 160px; }
+    .fc-card.active { flex: 0 0 260px; width: 260px; }
+  }
+
+  @media (min-width: 1024px) {
+    .fc-card { flex: 0 0 200px; width: 200px; }
+    .fc-card.active { flex: 0 0 300px; width: 300px; }
   }
 
   /* ✅ CARROUSEL FLUIDE */
@@ -1438,18 +1504,6 @@
     transition:
       max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
       opacity 0.4s ease 0.1s;
-  }
-  .fc-btn {
-    transition:
-      opacity 0.35s ease 0.15s,
-      max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-      padding 0.35s ease,
-      background 0.2s ease,
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-  .fc-amount {
-    transition: font-size 0.45s cubic-bezier(0.34, 1.2, 0.64, 1);
   }
   .fc-icon {
     transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
