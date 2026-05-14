@@ -876,6 +876,41 @@
       .hero-stats { gap: 16px; }
       .stat-n { font-size: 1.3rem !important; }
     }
+
+    @media (max-width: 768px) {
+      /* Bouton CTA final */
+      #ctaf .btn-gold {
+        padding: 14px 28px !important;
+        font-size: 0.95rem !important;
+        width: auto !important;
+        max-width: 320px !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+      }
+      /* Section CTA */
+      #ctaf { padding: 64px 20px; }
+      #ctaf .ctaf-in { max-width: 100%; }
+      #ctaf .ctaf-in h2 {
+        font-size: 1.65rem !important;
+        line-height: 1.25;
+      }
+      #ctaf .ctaf-in p {
+        font-size: 0.88rem !important;
+        margin-bottom: 24px;
+      }
+      #ctaf p:last-child {
+        font-size: 0.72rem !important;
+        line-height: 1.6;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #ctaf .btn-gold {
+        font-size: 0.88rem !important;
+        padding: 13px 22px !important;
+        max-width: 280px !important;
+      }
+    }
     @media (min-width:1440px) {
       section { padding:112px 64px; }
       #nav, #nav.scrolled { padding-left:64px; padding-right:64px; }
