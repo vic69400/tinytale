@@ -5,6 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import { redis } from "./db/redis";
 import { authPlugin } from "./auth/authPlugin";
 import { registerProtectedSplitRoutes, registerPublicSplitRoutes } from "./routes/splitRoutes";
+import { registerDevAuthRoutes } from "./routes/devAuthRoutes";
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -25,6 +26,14 @@ export function buildApp(): FastifyInstance {
   app.register(async (publicScope) => {
     registerPublicSplitRoutes(publicScope);
   });
+
+  // Route de connexion de développement uniquement (voir devAuthRoutes.ts) :
+  // à retirer/remplacer par le vrai système d'auth de l'opérateur en production.
+  if (process.env.NODE_ENV !== "production") {
+    app.register(async (devScope) => {
+      registerDevAuthRoutes(devScope);
+    });
+  }
 
   app.register(async (protectedScope) => {
     await protectedScope.register(authPlugin);
