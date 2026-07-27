@@ -1,0 +1,93 @@
+// Schéma Prisma du backend Split.
+// Soldes joueurs entièrement simulés (aucune transaction financière réelle).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Joueur (compte simulé, solde en unités entières — pas de wallet réel).
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  balance   Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  seedSessions SeedSession[]
+  gameHistory  GameHistory[]
+
+  @@map("users")
+}
+
+/// Session de seeds provably-fair d'un joueur. Le serverSeed n'est jamais
+/// exposé par l'API tant que isActive=true ; seul serverSeedHash l'est.
+model SeedSession {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  serverSeed     String    @map("server_seed")
+  serverSeedHash String    @map("server_seed_hash")
+  clientSeed     String    @map("client_seed")
+  nonce          Int       @default(0)
+  revealedAt     DateTime? @map("revealed_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user        User          @relation(fields: [userId], references: [id])
+  gameHistory GameHistory[]
+  gameRounds  GameRound[]
+
+  @@index([userId])
+  @@index([userId, isActive])
+  @@map("seed_sessions")
+}
+
+/// Un round joué au sein d'une partie Split : côté choisi vs côté sûr.
+model GameRound {
+  id            String   @id @default(uuid())
+  sessionId     String   @map("session_id")
+  gameHistoryId String   @map("game_history_id")
+  gameType      String   @default("split") @map("game_type")
+  betAmount     Int      @map("bet_amount")
+  roundNumber   Int      @map("round_number")
+  nonce         Int
+  chosenSide    String   @map("chosen_side")
+  safeSide      String   @map("safe_side")
+  survived      Boolean
+  hmac          String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  seedSession SeedSession @relation(fields: [sessionId], references: [id])
+  gameHistory GameHistory @relation(fields: [gameHistoryId], references: [id])
+
+  @@unique([gameHistoryId, roundNumber])
+  @@index([sessionId])
+  @@index([gameHistoryId])
+  @@map("game_rounds")
+}
+
+/// Une ligne par partie complète : historique joueur + stats côté casino.
+model GameHistory {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  gameType         String    @default("split") @map("game_type")
+  betAmount        Int       @map("bet_amount")
+  payout           Int       @default(0)
+  multiplierFinal  Float     @default(1) @map("multiplier_final")
+  status           String    @default("active")
+  seedSessionId    String    @map("seed_session_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  closedAt         DateTime? @map("closed_at")
+
+  user        User        @relation(fields: [userId], references: [id])
+  seedSession SeedSession @relation(fields: [seedSessionId], references: [id])
+  rounds      GameRound[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([seedSessionId])
+  @@map("game_history")
+}
