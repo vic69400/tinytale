@@ -4,6 +4,7 @@ import type {
   DevLoginResponse,
   PlayRoundResponse,
   PublicSeedSession,
+  RevealedSeedSession,
   Side,
   StartGameResponse,
   VerifySessionResponse,
@@ -84,7 +85,7 @@ export function getSession(token: string, userId: string): Promise<PublicSeedSes
 export function rotateSession(
   token: string,
   userId: string,
-): Promise<{ revealed: (PublicSeedSession & { serverSeed: string }) | null; current: PublicSeedSession }> {
+): Promise<{ revealed: RevealedSeedSession | null; current: PublicSeedSession }> {
   return request("/api/split/session/rotate", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },

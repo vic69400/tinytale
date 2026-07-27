@@ -9,6 +9,14 @@ export interface PublicSeedSession {
   isActive: boolean;
 }
 
+export interface RevealedSeedSession {
+  id: string;
+  serverSeed: string;
+  serverSeedHash: string;
+  clientSeed: string;
+  revealedAt: string | null;
+}
+
 export interface StartGameResponse {
   gameId: string;
   betAmount: number;
